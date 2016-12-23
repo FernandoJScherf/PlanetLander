@@ -4,3 +4,5 @@ Vector Graphics are fun.
 
 The idea is to finish this game and submit it to the Finally Finish Something Game Jam.
 https://itch.io/jam/finally-finish-something
+
+Defend your planet from spacial rocks and killer aliens!
