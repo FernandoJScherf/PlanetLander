@@ -1,0 +1,62 @@
+--The next two functions are needed to draw to the canvas and then
+--back from the canvas to the screen, upscaled, in every gamestate:draw:
+function setDrawTarget()
+  --Set the draw target to the canvas
+  love.graphics.setCanvas(canvas)
+  --Is necesary to clear the screen because the canvas will still have what
+  --was draw on it during the past frame:
+  love.graphics.clear()
+end
+
+function backToScreenAndUpscale()
+  --This sets the target back to the screen.
+  --(Once you draw on the offscreen canvas, you have to draw the canvas
+  --on the visible screen)
+    love.graphics.setCanvas() 
+  --DRAW UPSCALED CANVAS.
+    love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
+end
+
+--LOVE CALLBACKS:
+function love.load()
+  menu = {} --Menu gamestate
+  play = {} --Game gamestate
+  
+  Object = require "classic"
+  Gamestate = require "gamestate"
+  require "menuState"
+  require "playState"
+  require "polygonSuperClass"
+  require "shipClass"
+  
+  time = 0
+  upscalingFactor = 2
+  screenWidth = love.graphics.getWidth() -- Should be 256
+  screenHeight = love.graphics.getHeight() -- Should be 144
+  
+  love.graphics.setDefaultFilter("nearest", "nearest", 1)
+  
+  --Load a new font and set it as the current one:
+    fontSize = 16
+    love.graphics.setFont(love.graphics.newFont("m5x7.ttf", fontSize))
+  
+  --Set windows size accordingly to upscalingFactor: 
+    love.window.setMode(screenWidth * upscalingFactor,
+                        screenHeight * upscalingFactor)
+                      
+  --Create Canvas so I can draw everything on it and then upscale it as 
+  --I want to. Then set filter to nearest:
+    canvas = love.graphics.newCanvas(256, 144)
+    --canvas:setFilter("nearest", "nearest")
+  
+  --  Register Gamestate Events and switch to the firtst one:
+    Gamestate.registerEvents()
+    Gamestate.switch(menu)
+end
+
+--Callback function triggered when a key is pressed:
+function love.keypressed(key)
+ if key == "escape" then
+    love.event.quit()
+ end
+end
