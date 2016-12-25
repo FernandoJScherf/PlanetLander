@@ -1,3 +1,6 @@
+--Planet Lander. Fernando Jose Scherf. December 2016 - January 2017
+
+
 --The next two functions are needed to draw to the canvas and then
 --back from the canvas to the screen, upscaled, in every gamestate:draw:
 function setDrawTarget()
@@ -31,8 +34,10 @@ function love.load()
   
   time = 0
   upscalingFactor = 2
-  screenWidth = love.graphics.getWidth() -- Should be 256
-  screenHeight = love.graphics.getHeight() -- Should be 144
+  screenWidth = 256*2--256 
+  centerScreenX = screenWidth / 2
+  screenHeight = 144*2--144 
+  centerScreenY = screenHeight / 2
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   
@@ -46,7 +51,7 @@ function love.load()
                       
   --Create Canvas so I can draw everything on it and then upscale it as 
   --I want to. Then set filter to nearest:
-    canvas = love.graphics.newCanvas(256, 144)
+    canvas = love.graphics.newCanvas(screenWidth, screenHeight)
     --canvas:setFilter("nearest", "nearest")
   
   --  Register Gamestate Events and switch to the firtst one:
