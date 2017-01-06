@@ -4,8 +4,16 @@ Polygon = Object:extend()
 function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   self.xCenter = xCenter --Center of the Polygon.
   self.yCenter = yCenter --Center of the Polygon.
+  
+  --The vertices are coordinates relative to the center, so I have to 
+  --add the center point to them:
+  for i = 1, #vertices, 2 do
+    vertices[i]   = vertices[i]   + xCenter
+    vertices[i+1] = vertices[i+1] + yCenter
+  end
+  
   self.vertices = vertices
-  self.xSpeed = 30 -- pps pixel per second
+  self.xSpeed = math.random(-30, 30) -- pps pixel per second
   self.ySpeed = 0 -- pps pixel per second
   self.aSpeed = math.random(-3, 3) --math.pi() --The amount that the angle will change per second.
   --Is in Radians. 0.1 = aprox 5,72958 degrees.
@@ -22,7 +30,7 @@ function Polygon:update(dt)
     local Yi = self.yCenter
     local Px = centerScreenX
     local Py = centerScreenY
-    local M = 100000      --Mass of the planet.
+    local M = 100000--100000      --Mass of the planet.
     
     --1)
     local g = M / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
@@ -68,7 +76,7 @@ end
 
 function Polygon:draw()
   love.graphics.setColor(self.red, self.green, self.blue)
-  love.graphics.polygon("line", self.vertices)
+  love.graphics.polygon(fillOrLine, self.vertices)
   love.graphics.points(self.xCenter, self.yCenter)
   love.graphics.setColor(255, 255, 255)
   --[[love.graphics.print("gX" .. gX, 10, 140)

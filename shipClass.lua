@@ -1,11 +1,13 @@
 Ship = Polygon:extend()
 
 function Ship:new(xCenter, yCenter, red, green, blue)
-  local vertices = {xCenter - 4 , yCenter + 2,
-                    xCenter     , yCenter + 6,
-                    xCenter + 4 , yCenter + 2,
-                    xCenter + 4 , yCenter - 6,
-                    xCenter     , yCenter - 2,
-                    xCenter - 4 , yCenter - 6}
+  self.radius = 3
+  
+  local vertices = {  -4 ,  2 ,
+                       0 ,  6 ,
+                       4 ,  2 ,
+                       4 , -6 ,
+                       0 , -2 ,
+                      -4 , -6 }
   Ship.super.new(self, xCenter, yCenter, vertices, red, green, blue)
 end

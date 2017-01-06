@@ -20,26 +20,31 @@ function backToScreenAndUpscale()
     love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
 end
 
+  upscalingFactor = 2
+  screenWidth = 256--256*2--256 
+  centerScreenX = screenWidth / 2
+  screenHeight = 256--144*2--144 
+  centerScreenY = screenHeight / 2
+  fillOrLine = "line" --For the polygons and circles and stuff.
+
 --LOVE CALLBACKS:
 function love.load()
   menu = {} --Menu gamestate
   play = {} --Game gamestate
+  score = {} --High Score gamestate
   
   Object = require "classic"
   Gamestate = require "gamestate"
   require "menuState"
   require "playState"
+  require "scoreState"
   require "polygonSuperClass"
   require "shipClass"
-  
-  time = 0
-  upscalingFactor = 2
-  screenWidth = 256*2--256 
-  centerScreenX = screenWidth / 2
-  screenHeight = 144*2--144 
-  centerScreenY = screenHeight / 2
+  require "spaceDustClass"
+  require "spaceRockClass"
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
+  love.graphics.setLineStyle("rough")
   
   --Load a new font and set it as the current one:
     fontSize = 16
@@ -61,7 +66,14 @@ end
 
 --Callback function triggered when a key is pressed:
 function love.keypressed(key)
- if key == "escape" then
+  if key == "escape" then
     love.event.quit()
- end
+  end
+  if key == "l" or key == "f" then
+    if fillOrLine == "line" then
+      fillOrLine = "fill"
+    else
+      fillOrLine = "line"
+    end
+  end
 end

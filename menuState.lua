@@ -1,6 +1,7 @@
 --MENU GAMESTATE CALLBACKS:
+  local time = 0
 function menu:update(dt)
-    time = dt + time          --time in seconds since the start of the program.
+  time = dt + time          --time in seconds since the start of the program.
 end
 
 function menu:draw()
@@ -16,5 +17,9 @@ function menu:draw()
 end
 
 function menu:keyreleased(key)
-  Gamestate.switch(play)
+  if key == "h" then
+    Gamestate.switch(score)
+  else
+    Gamestate.switch(play)
+  end
 end
