@@ -3,13 +3,14 @@ local circleRadius = 14
 local ship ; local spaceDust = {} ; local spaceRock = {}
 local nSpaceDusts = math.floor( screenWidth / 4 )
 local nSpaceRocks
-local entities = {}
+entities = {}
 
 function play:init()
   entities[1] = Ship(centerScreenX + 50, centerScreenY - 100,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))
   entities[1].xSpeed = 15
   entities[1].aSpeed = 2
+  ship = entities[1]
   entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))
   entities[2].xSpeed = 00
@@ -40,32 +41,43 @@ function play:init()
   
 end
 
-function checkCollision(x1, y1, r1, x2, y2, r2)
-  
+function checkColl(x1, y1, r1, x2, y2, r2)
+  local entity = entities[i]
+  local dX = math.abs(x2 - x1)
+  local dY = math.abs(y2 - y1)
+  local dRadius = r1 + r2
+  if dRadius >= dX and dRadius >= dY then
+    return true
+  else
+    return false
+  end 
 end
 
 function play:update(dt)
-  --Change for while, probably
   local i = 1
+  --CHECK FOR COLLISIONS!!!
   while i <= #entities do
-    --Check for collision
-    if  entities[i].radius then --They all should have radius......
-      --Anything Against Planet:
-      local entity = entities[i]
-        local dX = math.abs(entity.xCenter - centerScreenX)
-        local dY = math.abs(entity.yCenter - centerScreenY)
-        local dRadius = entity.radius - entity.radius/3 + circleRadius
-      if dRadius >= dX and dRadius >= dY then
-          table.remove(entities, i)
+    --Anything Against Planet:
+    if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
+        centerScreenX, centerScreenY, circleRadius) then
+      table.remove(entities, i)
+      i = i - 1
+    else
+    --Entities vs entities:
+      for j = i + 1, #entities do
+        if checkColl(entities[i].xCenter, entities[i].yCenter,
+            entities[i].radius, entities[j].xCenter, entities[j].yCenter,
+            entities[j].radius) then
+          table.remove(entities, j)
+          --table.remove(entities, i)
           i = i - 1
-        --end
+          break
+        end
       end
-      
     end
-    
     i = i + 1
   end
-  
+   
   --This was not necessary: local limit = #entities
   for i = 1, #entities do
       --update current entity:

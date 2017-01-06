@@ -23,7 +23,7 @@ end
   upscalingFactor = 2
   screenWidth = 256--256*2--256 
   centerScreenX = screenWidth / 2
-  screenHeight = 256--144*2--144 
+  screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2
   fillOrLine = "line" --For the polygons and circles and stuff.
 
