@@ -15,29 +15,58 @@ function Ship:new(xCenter, yCenter, red, green, blue)
 end
 
 local counter = 0
-function propulDust(dt, waitTime, x, y)
-  if counter <= waitTime then --Seconds between creation of dust.
+function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
+  --if counter <= waitTime then --Seconds between creation of dust.
     counter = counter + dt
-  else 
+  --else 
     random = math.random(0, 100)
-    table.insert(entities, SpaceDust(x + 4, y - 4,
-                  127 + random, 16 + random, 16 + random
-                  ))
+    table.insert(entities, SpaceDust(x, y,
+                  127 + random, 16 + random, 16 + random))
     counter = 0
-  end
+    
+    --Give velocity to dust:
+    local v  = 40 --pixels per second.
+    local ent = entities[#entities]
+    ent.xSpeed = v*math.cos(angle) + xSpeedObject
+    ent.ySpeed = v*math.sin(angle) + ySpeedObject
+  --end
 end
 
 function Ship:update(dt)
+
+  Ship.super.update(self, dt)
+  
   --SHIP CONTROL:
+  local pi = math.pi
+  local pi2 = pi*2
   local acceleration = 10
+  local waitTime = 0.07
   if love.keyboard.isDown(self.rotRight) then
     self.aSpeed = self.aSpeed + acceleration * dt
-    propulDust(dt, 0.1, self.xCenter, self.yCenter)
+    propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
+      self.rotation + pi, self.xSpeed, self.ySpeed)
+    --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
   if love.keyboard.isDown(self.rotLeft) then
     self.aSpeed = self.aSpeed - acceleration * dt
-    print (self.rotRight .. " pressed." .. dt)
+    propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
+      self.rotation + pi2, self.xSpeed, self.ySpeed)
+    --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
-  
-  Ship.super.update(self, dt)
+  if love.keyboard.isDown(self.accelerate) then
+     
+    local speedAddedPerSecond = 3 --pixels per second
+    local angle = self.rotation + pi/2
+    local xSpeedAdded = speedAddedPerSecond * math.cos(angle)
+    local ySpeedAdded = speedAddedPerSecond * math.sin(angle)
+    local angleDis = angle + pi
+    
+    propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
+      angleDis, 0, 0)
+    propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
+      angleDis, 0, 0)
+    
+    self.xSpeed = self.xSpeed + xSpeedAdded
+    self.ySpeed = self.ySpeed + ySpeedAdded
+  end
 end

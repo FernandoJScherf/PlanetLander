@@ -1,25 +1,22 @@
 --PLAY GAMESTATE CALLBACKS:
 local circleRadius = 14
 local ship ; local spaceDust = {} ; local spaceRock = {}
-local nSpaceDusts = math.floor( screenWidth / 4 )
+
 local nSpaceRocks
 entities = {}
 
 function play:init()
   entities[1] = Ship(centerScreenX + 50, centerScreenY - 100,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))
-  entities[1].xSpeed = 15
+  entities[1].xSpeed = 25
   entities[1].aSpeed = 2
-  ship = entities[1]
-  entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
-         math.random(0, 100), math.random(0, 100), math.random(150, 170))
-  entities[2].xSpeed = 00
-  entities[2].aSpeed = 2
+  --ship = entities[1]
   
   local extSpace = screenWidth/4
+  local nSpaceDusts = math.floor( screenWidth / 4 )
   local limit = nSpaceDusts + #entities
   for i = 1 + #entities, limit  do
-    local color = math.random(100, 200)
+    local color = math.random(80, 240)
     entities[i] = SpaceDust(math.random(-extSpace, screenWidth + extSpace),
                   math.random(-extSpace, screenHeight + extSpace), color - 50,
                   color - 50, color + 10)
@@ -28,10 +25,10 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 10
+  nSpaceRocks = 100
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
-    local color = math.random(100, 200)
+    local color = math.random(30, 220)
     local x ; local y
     
     entities[i] = SpaceRock(math.random(-extSpace, screenWidth + extSpace),

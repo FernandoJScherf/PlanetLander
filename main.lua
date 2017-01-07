@@ -20,12 +20,12 @@ function backToScreenAndUpscale()
     love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
 end
 
-  upscalingFactor = 2
-  screenWidth = 256--256*2--256 
+  upscalingFactor = 1
+  screenWidth = 584--256*2--256 
   centerScreenX = screenWidth / 2
   screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2
-  fillOrLine = "line" --For the polygons and circles and stuff.
+  fillOrLine = "fill" --For the polygons and circles and stuff.
 
 --LOVE CALLBACKS:
 function love.load()
