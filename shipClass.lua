@@ -62,9 +62,9 @@ function Ship:update(dt)
     local angleDis = angle + pi
     
     propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
-      angleDis, 0, 0)
+      angleDis, self.xSpeed, self.ySpeed)
     propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
-      angleDis, 0, 0)
+      angleDis, self.xSpeed, self.ySpeed)
     
     self.xSpeed = self.xSpeed + xSpeedAdded
     self.ySpeed = self.ySpeed + ySpeedAdded

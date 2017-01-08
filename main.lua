@@ -21,7 +21,7 @@ function backToScreenAndUpscale()
 end
 
   upscalingFactor = 1
-  screenWidth = 584--256*2--256 
+  screenWidth = 512--256*2--256 
   centerScreenX = screenWidth / 2
   screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2

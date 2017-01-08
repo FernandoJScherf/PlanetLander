@@ -42,7 +42,7 @@ function checkColl(x1, y1, r1, x2, y2, r2)
   local entity = entities[i]
   local dX = math.abs(x2 - x1)
   local dY = math.abs(y2 - y1)
-  local dRadius = r1 + r2
+  local dRadius = (r1 + r2) - (r1 + r2)/4 --Some margin for the player
   if dRadius >= dX and dRadius >= dY then
     return true
   else
@@ -54,20 +54,47 @@ function play:update(dt)
   local i = 1
   --CHECK FOR COLLISIONS!!!
   while i <= #entities do
-    --Anything Against Planet:
+    --ENTITIES AGAINST PLANET:
     if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
         centerScreenX, centerScreenY, circleRadius) then
       table.remove(entities, i)
       i = i - 1
     else
-    --Entities vs entities:
+    --ENTITIES VS ENTITIES:
       for j = i + 1, #entities do
         if checkColl(entities[i].xCenter, entities[i].yCenter,
             entities[i].radius, entities[j].xCenter, entities[j].yCenter,
             entities[j].radius) then
-          table.remove(entities, j)
-          --table.remove(entities, i)
-          i = i - 1
+            
+          --[[if entities[i]:is(SpaceRock) then
+            table.remove(entities, j)
+            --table.remove(entities, i)
+            i = i - 1
+          end]]
+          local ent1 = Polygon(0,0,{0,0},0,0,0) ; local ent1Pos
+          local ent2 = Polygon(0,0,{0,0},0,0,0) ; local ent2Pos
+          --So SpaceRock type is always in ent1 if there is in fact 
+          --an SpaceRock in the comparison:
+          if entities[i]:is(SpaceRock) then 
+            ent1 = entities[i] ; ent1Pos = i
+            ent2 = entities[j] ; ent2Pos = j
+          elseif entities[j]:is(SpaceRock) then
+            ent1 = entities[j] ; ent1Pos = j
+            ent2 = entities[i] ; ent2Pos = i
+          end
+          if ent1:is(SpaceRock) then --If there is an Space Rock.
+            if ent2:is(SpaceRock) then--Against another spaceRock.
+              table.remove(entities, j)
+              table.remove(entities, i)
+              i = i - 1
+            elseif ent2:is(SpaceDust) then--Against SpaceDust
+              table.remove(entities, ent2Pos)
+              i = i - 1
+            elseif ent2:is(Ship) then --Against Ship
+              table.remove(entities, ent2Pos)
+              i = i - 1
+            end
+          end
           break
         end
       end
