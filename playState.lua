@@ -25,7 +25,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 100
+  nSpaceRocks = 30
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -33,7 +33,7 @@ function play:init()
     
     entities[i] = SpaceRock(math.random(-extSpace, screenWidth + extSpace),
                   math.random(-extSpace, screenWidth + extSpace),
-                  color + 30, color, color, 10)
+                  color + 30, color, color, 20)
   end
   
 end
@@ -48,6 +48,20 @@ function checkColl(x1, y1, r1, x2, y2, r2)
   else
     return false
   end 
+end
+
+function elastic(ent1, ent2)
+  local xV1 = ent1.xSpeed; local yV1 = ent1.ySpeed
+  local xV2 = ent2.xSpeed; local yV2 = ent2.ySpeed
+  local m1 = ent1.radius ; local m2 = ent2.radius
+  local m1Pm2 = m1 + m2
+  
+  local xV1New = (xV1 * (m1 - m2) + 2 * m2 * xV2) / m1Pm2 --The elastic
+  local xV2New = (xV2 * (m2 - m1) + 2 * m1 * xV1) / m1Pm2 --formulas 
+  local yV1New = (yV1 * (m1 - m2) + 2 * m2 * yV2) / m1Pm2 --separated in 
+  local yV2New = (yV2 * (m2 - m1) + 2 * m1 * yV1) / m1Pm2 --components x,y.
+  
+  return  xV1New, yV1New, xV2New, yV2New
 end
 
 function play:update(dt)
@@ -66,36 +80,74 @@ function play:update(dt)
             entities[i].radius, entities[j].xCenter, entities[j].yCenter,
             entities[j].radius) then
             
-          --[[if entities[i]:is(SpaceRock) then
-            table.remove(entities, j)
-            --table.remove(entities, i)
-            i = i - 1
-          end]]
-          local ent1 = Polygon(0,0,{0,0},0,0,0) ; local ent1Pos
-          local ent2 = Polygon(0,0,{0,0},0,0,0) ; local ent2Pos
-          --So SpaceRock type is always in ent1 if there is in fact 
+          --So SpaceRock type is always in entities[i] if there is in fact 
           --an SpaceRock in the comparison:
-          if entities[i]:is(SpaceRock) then 
-            ent1 = entities[i] ; ent1Pos = i
-            ent2 = entities[j] ; ent2Pos = j
-          elseif entities[j]:is(SpaceRock) then
-            ent1 = entities[j] ; ent1Pos = j
-            ent2 = entities[i] ; ent2Pos = i
+          if entities[j]:is(SpaceRock) and 
+              entities[i]:is(SpaceRock) == false then
+            local entSave = entities[i]
+            entities[i] = entities[j]
+            entities[j] = entSave
           end
-          if ent1:is(SpaceRock) then --If there is an Space Rock.
-            if ent2:is(SpaceRock) then--Against another spaceRock.
+          if entities[i]:is(SpaceRock) then --If there is an Space Rock.
+            if entities[j]:is(SpaceRock) then--Against another spaceRock.
+              
+                local radius = entities[i].radius
+                local sqrt2 = math.sqrt(2)
+                local newRadius = radius/sqrt2
+                
+                local xSpeedI ; local ySpeedI
+                local xSpeedJ ; local ySpeedJ
+                --ELASTIC COLLISION MAN!!!!
+                xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
+                elastic(entities[i], entities[j])
+                
+                if radius >= 4 then --The rocks should never be too small.
+                  for k = 1, 2 do
+                    table.insert(entities, 
+                    SpaceRock(entities[i].xCenter + radius * k * 2,
+                              entities[i].yCenter,
+                              entities[i].red,
+                              entities[i].green,
+                              entities[i].blue,
+                              newRadius))
+                    --RESULTS OF THE ELASTIC COLLISION
+                    entities[#entities].xSpeed = xSpeedI--+ math.random(-2,2)
+                    entities[#entities].ySpeed = ySpeedI--+ math.random(-2,2)
+                  end
+                end
+                
+                radius = entities[j].radius
+                newRadius = radius/sqrt2
+                
+                if radius >= 4 then --The rocks should never be too small.
+                  for k = 1, 2 do
+                  table.insert(entities, 
+                    SpaceRock(entities[j].xCenter + radius * k * 2,
+                              entities[j].yCenter,
+                              entities[j].red,
+                              entities[j].green,
+                              entities[j].blue,
+                              newRadius))
+                    --RESULTS OF THE ELASTIC COLLISION
+                    entities[#entities].xSpeed = xSpeedJ--math.random(-2,2)
+                    entities[#entities].ySpeed = ySpeedJ--math.random(-2,2)
+                  end
+                end
+
               table.remove(entities, j)
               table.remove(entities, i)
+              
+
               i = i - 1
-            elseif ent2:is(SpaceDust) then--Against SpaceDust
-              table.remove(entities, ent2Pos)
+            elseif entities[j]:is(SpaceDust) then--Against SpaceDust
+              table.remove(entities, j)
               i = i - 1
-            elseif ent2:is(Ship) then --Against Ship
-              table.remove(entities, ent2Pos)
+            elseif entities[j]:is(Ship) then --Against Ship
+              table.remove(entities, j)
               i = i - 1
             end
           end
-          break
+          break --If there is a collission.
         end
       end
     end

@@ -14,15 +14,14 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   Ship.super.new(self, xCenter, yCenter, vertices, red, green, blue)
 end
 
-local counter = 0
+
 function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
   --if counter <= waitTime then --Seconds between creation of dust.
-    counter = counter + dt
+
   --else 
     random = math.random(0, 100)
     table.insert(entities, SpaceDust(x, y,
                   127 + random, 16 + random, 16 + random))
-    counter = 0
     
     --Give velocity to dust:
     local v  = 40 --pixels per second.
