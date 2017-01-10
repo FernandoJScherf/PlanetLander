@@ -42,6 +42,7 @@ function love.load()
   require "shipClass"
   require "spaceDustClass"
   require "spaceRockClass"
+  require "bulletClass"
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")

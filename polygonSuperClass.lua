@@ -13,8 +13,8 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   end
   
   self.vertices = vertices
-  self.xSpeed = math.random(-30, 30) -- pps pixel per second
-  self.ySpeed = math.random(-30, 30) -- pps pixel per second
+  self.xSpeed = 0 -- pps pixel per second
+  self.ySpeed = 0 -- pps pixel per second
   self.aSpeed = math.random(-3, 3) --math.pi() --The amount that the angle will change per second.
   self.rotation = 0
   --Is in Radians. 0.1 = aprox 5,72958 degrees.

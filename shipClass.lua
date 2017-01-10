@@ -1,7 +1,7 @@
 Ship = Polygon:extend()
 
 function Ship:new(xCenter, yCenter, red, green, blue)
-  self.radius = 3
+  self.radius = 2 --Some margin for the player
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
   
@@ -19,7 +19,7 @@ function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
   --if counter <= waitTime then --Seconds between creation of dust.
 
   --else 
-    random = math.random(0, 100)
+    local random = math.random(0, 100)
     table.insert(entities, SpaceDust(x, y,
                   127 + random, 16 + random, 16 + random))
     
@@ -31,6 +31,7 @@ function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
   --end
 end
 
+local timeToShoot = 0
 function Ship:update(dt)
 
   Ship.super.update(self, dt)
@@ -67,5 +68,39 @@ function Ship:update(dt)
     
     self.xSpeed = self.xSpeed + xSpeedAdded
     self.ySpeed = self.ySpeed + ySpeedAdded
+  end
+  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.5 then
+    local random = math.random(0, 50)
+    table.insert(entities, Bullet(
+        self.vertices[3],
+        self.vertices[4],
+        200 + random, 
+        20 + random, 
+        70 + random))
+    
+    timeToShoot = 0
+    
+    local angle = self.rotation
+    local ent = entities[#entities]
+    -- Rotate vertices depending on ship angle when it shoots.
+    for i = 1, #ent.vertices, 2 do
+      local xMinusOx = ent.vertices[i] - ent.xCenter
+      local yMinusOy = ent.vertices[i+1] - ent.yCenter 
+      --x'= (x - Ox).cos(ang) - (y - Oy).sin(ang) + Ox
+      ent.vertices[i] = xMinusOx * math.cos(angle) - 
+                     yMinusOy*math.sin(angle) + ent.xCenter
+      ent.vertices[i+1] = xMinusOx * math.sin(angle) + 
+                       yMinusOy*math.cos(angle) + ent.yCenter 
+    end
+
+    --Give velocity to bullet:
+    local v  = 200 --pixels per second.
+    angle = angle + math.pi/2
+    ent.xSpeed = v*math.cos(angle) + self.xSpeed
+    ent.ySpeed = v*math.sin(angle) + self.ySpeed
+    ent.aSpeed = 0
+    
+  else
+    timeToShoot = timeToShoot + dt
   end
 end
