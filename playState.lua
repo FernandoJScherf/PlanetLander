@@ -13,6 +13,7 @@ function play:init()
   entities[1].xSpeed = 25
   entities[1].aSpeed = 0
   --ship = entities[1]
+  --entities[2] = Explotion(200, 150, 150, 150, 150, 50)
   
   local nSpaceDusts = math.floor( screenWidth / 4 )
   local limit = nSpaceDusts + #entities
@@ -26,7 +27,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 10
+  nSpaceRocks = 5
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -34,7 +35,7 @@ function play:init()
     
     entities[i] = SpaceRock(math.random(-extSpace, screenWidth + extSpace),
                   math.random(-extSpace, screenWidth + extSpace),
-                  color + 30, color, color, 10)
+                  color + 30, color, color, 15)
                 
     entities[i].xSpeed = math.random( -6, 6) 
     entities[i].ySpeed = math.random( -6, 6) 
@@ -68,19 +69,74 @@ function elastic(ent1, ent2)
   return  xV1New, yV1New, xV2New, yV2New
 end
 
+function insertFullExplotion(xCenter, yCenter, radiusMax, xSpeed, ySpeed)
+  table.insert(entities, 
+    Explotion(xCenter, 
+              yCenter,
+              220, 110, 10,
+              radiusMax))
+          
+    entities[#entities].xSpeed = xSpeed
+    entities[#entities].ySpeed = ySpeed
+  
+  --INSERT COOL SPACE DUST:
+  if radiusMax > 4 then --Only when the object colliding is big enough.
+    local pi = math.pi
+    local increments = pi / 4 --Max is 2*pi, these are 8 increments
+    for amp = 1, radiusMax * 2
+    , 2 do
+      for angle = 0, pi * 2, increments do
+        local random = math.random()
+        local x = math.cos(angle + random) * amp
+        local y = math.sin(angle + random) * amp
+        
+        random = math.random(-20, 20)
+        table.insert(entities, SpaceDust(x + xCenter, y + yCenter,
+                      200 + random, 110 + random, 10 + random))
+                  
+        entities[#entities].xSpeed = xSpeed + x
+        entities[#entities].ySpeed = ySpeed + y
+      end
+    end
+  end
+end
+
 function play:update(dt)
-  local i = 1
+  local i = 1 
   --CHECK FOR COLLISIONS!!!
   while i <= #entities do
-    --ENTITIES AGAINST PLANET:
+    --ENTITIES AGAINST PLANET: 
+    --Don't check collision for: explotions.
     if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
-        centerScreenX, centerScreenY, circleRadius) then
+      centerScreenX, centerScreenY, circleRadius) then
+      
+      --Special Conditions for the ship's collision
+      if entities[i]:is(Ship) or entities[i]:is(Bullet) then
+        insertFullExplotion(
+                entities[i].xCenter, 
+                entities[i].yCenter,
+                entities[i].radius + 5,
+                0, 
+                0)     
+      --If the entity colliding is not of the type explotion
+      --Create an explotion!
+      elseif not entities[i]:is(Explotion) then
+        insertFullExplotion(
+                entities[i].xCenter, 
+                entities[i].yCenter,
+                entities[i].radius,
+                0, 
+                0)
+      end      
+      
       table.remove(entities, i)
       i = i - 1
+
     else
     --ENTITIES VS ENTITIES:
       for j = i + 1, #entities do
-        if checkColl(entities[i].xCenter, entities[i].yCenter,
+        
+        if  checkColl(entities[i].xCenter, entities[i].yCenter,
             entities[i].radius, entities[j].xCenter, entities[j].yCenter,
             entities[j].radius) then
             
@@ -94,7 +150,7 @@ function play:update(dt)
           end
           if entities[i]:is(SpaceRock) then --If there is an Space Rock.
             if entities[j]:is(SpaceRock) then--Against another spaceRock.
-                              
+                                            
               local xSpeedI ; local ySpeedI
               local xSpeedJ ; local ySpeedJ
               --ELASTIC COLLISION MAN!!!!
@@ -110,39 +166,76 @@ function play:update(dt)
               --table.remove(entities, i)
               
               --i = i - 1
-            elseif entities[j]:is(SpaceDust) then--Against SpaceDust
+            elseif entities[j]:is(SpaceDust) then--Against SpaceDust.
               table.remove(entities, j)
               i = i - 1
-            elseif entities[j]:is(Ship) then --Against Ship
+            elseif entities[j]:is(Ship) then --Against Ship.
+            --Explotion!
+              insertFullExplotion(
+                entities[j].xCenter, 
+                entities[j].yCenter,
+                entities[j].radius + 5,
+                entities[i].xSpeed, --In this case, the collision is completely
+                entities[i].ySpeed) --Inelastic :D
+              
               table.remove(entities, j)
               i = i - 1
-            elseif entities[j]:is(Bullet) then
+            elseif entities[j]:is(Bullet) then --Against Bullet.
+              local xSpeedI ; local ySpeedI
+              local xSpeedJ ; local ySpeedJ
+              --ELASTIC COLLISION MAN!!!!
+              xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
+              elastic(entities[i], entities[j])
               if entities[i].radius >= 4 then 
-              --The rocks should never be too small.
-                local xSpeedI ; local ySpeedI
-                local xSpeedJ ; local ySpeedJ
-                --ELASTIC COLLISION MAN!!!!
-                xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
-                elastic(entities[i], entities[j])
-                
+              --The rocks should never be too small.   
                 local radius = entities[i].radius
                 local sqrt2 = math.sqrt(2)
                 local newRadius = radius/sqrt2 --So the new radius of the 
                 --new two rocks left after the collision makes them have
                 --half the area of the original rock.
-                for k = 1, 2 do
-                  table.insert(entities, 
-                  SpaceRock(entities[i].xCenter + radius * k * 2,
-                            entities[i].yCenter,
-                            entities[i].red,
-                            entities[i].green,
-                            entities[i].blue,
-                            newRadius))
-                  --RESULTS OF THE ELASTIC COLLISION
-                  entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
-                  entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
-                end
+
+                
+                local angle = math.atan2(xSpeedI, ySpeedI) - math.pi / 2
+                local p1X = radius * math.cos(angle)
+                local p1Y = radius * math.sin(angle)
+
+                table.insert(entities, 
+                SpaceRock(entities[i].xCenter + p1X,
+                          entities[i].yCenter + p1Y,
+                          entities[i].red,
+                          entities[i].green,
+                          entities[i].blue,
+                          newRadius))
+                      
+                --RESULTS OF THE ELASTIC COLLISION
+                entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
+                entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
+                  
+                angle = math.atan2(xSpeedI, ySpeedI) + math.pi / 2
+                p1X = radius * math.cos(angle)
+                p1Y = radius * math.sin(angle)
+
+                table.insert(entities, 
+                SpaceRock(entities[i].xCenter + p1X,
+                          entities[i].yCenter + p1Y,
+                          entities[i].red,
+                          entities[i].green,
+                          entities[i].blue,
+                          newRadius))
+                      
+                --RESULTS OF THE ELASTIC COLLISION
+                entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
+                entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
+
               end
+              --Explotion.
+              insertFullExplotion(
+                entities[i].xCenter, 
+                entities[i].yCenter,
+                entities[i].radius,
+                xSpeedI, 
+                ySpeedI)
+                      
               table.remove(entities, j)
               table.remove(entities, i)
               i = i - 1
@@ -155,35 +248,44 @@ function play:update(dt)
     i = i + 1
   end
    
-  --This was not necessary: local limit = #entities
-  for i = 1, #entities do
-      --update current entity:
-      entities[i]:update(dt)
+  i = 1
+  while i <= #entities do
+    --update current entity:
+    entities[i]:update(dt)
+    --If an explotion was created, it must be destroyed after.
+    if entities[i]:is(Explotion) and entities[i].radiusVar <= 0 then
+      table.remove(entities, i)
+      i = i - 1
+    end  
+    i = i + 1
   end
-    
+
 end
 
 function play:draw()
   setDrawTarget()  
   
   --DRAW EVERYTHING
-    --Draw Planet:
-    local totalRadius
-    for i = 16, 2, -4 do
-      love.graphics.setColor(116 / i, 116 / i, 232 / i)
-      totalRadius = circleRadius + i * 2
-      love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
-        totalRadius)
-    end
-    love.graphics.setColor(78, 98, 136)
+  --Draw Atmosphere:
+  local totalRadius
+  local margen = 2--Add a margen so collisions occur inside visible circle.
+  for i = 16, 2, -4 do
+    love.graphics.setColor(116 / i, 116 / i, 232 / i)
+    totalRadius = circleRadius + i * 2 + margen
     love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
-      circleRadius)
-    love.graphics.setColor(255,255,255)
+      totalRadius)
+  end
     
   local limit = #entities
   for i = 1, limit do
     entities[i]:draw()
   end
+  
+  --Draw Planet:
+  love.graphics.setColor(78, 98, 136)
+  love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
+    circleRadius + margen) 
+  love.graphics.setColor(255,255,255)
     
   backToScreenAndUpscale()
 end

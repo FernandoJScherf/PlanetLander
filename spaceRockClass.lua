@@ -4,6 +4,7 @@ function SpaceRock:new(xCenter, yCenter, red, green, blue, radius)
   local vertices = {}
   self.radius = radius
   
+  --Every Rock is procedurally generated.
   local points = 3 + math.floor( self.radius / 2 )
   local radDiv2 = self.radius / 2
   local i = 1

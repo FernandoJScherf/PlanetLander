@@ -1,10 +1,9 @@
-Polygon = Object:extend()
+Polygon = Point:extend()
 
 --This is the constructor of our base class.
 function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
-  self.xCenter = xCenter --Center of the Polygon.
-  self.yCenter = yCenter --Center of the Polygon.
-  
+  Polygon.super.new(self, xCenter, yCenter)
+
   --The vertices are coordinates relative to the center, so I have to 
   --add the center point to them:
   for i = 1, #vertices, 2 do
@@ -13,8 +12,6 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   end
   
   self.vertices = vertices
-  self.xSpeed = 0 -- pps pixel per second
-  self.ySpeed = 0 -- pps pixel per second
   self.aSpeed = math.random(-3, 3) --math.pi() --The amount that the angle will change per second.
   self.rotation = 0
   --Is in Radians. 0.1 = aprox 5,72958 degrees.
@@ -25,28 +22,7 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
 end
 
 function Polygon:update(dt)
-  --Update new vertices:\
-  --TRANSLATION (of the Center of the polygon)
-    local Xi = self.xCenter
-    local Yi = self.yCenter
-    local Px = centerScreenX
-    local Py = centerScreenY
-    local M = 100000--100000      --Mass of the planet.
-    
-    --1)
-    local g = M / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
-    
-    --angle =  math.atan((Yi - Py) / (Xi - Px)) --modulo?
-    local angle = math.atan2((Py - Yi), (Px - Xi))
-    local gX = g * math.cos(angle)
-    local gY = g * math.sin(angle)
-    --2)
-    self.xSpeed = gX * dt + self.xSpeed
-    self.ySpeed = gY * dt + self.ySpeed
-    
-    --3)
-    self.xCenter = self.xSpeed * dt + self.xCenter
-    self.yCenter = self.ySpeed * dt + self.yCenter
+  Polygon.super.update(self, dt)
     
     local aSpeedTimesDT = self.aSpeed * dt
     for i = 1, #self.vertices, 2 do

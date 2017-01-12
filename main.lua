@@ -38,11 +38,14 @@ function love.load()
   require "menuState"
   require "playState"
   require "scoreState"
+  require "pointSuperClass"
   require "polygonSuperClass"
   require "shipClass"
   require "spaceDustClass"
   require "spaceRockClass"
   require "bulletClass"
+  --require "pointSuperClass"
+  require "explotionClass"
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")

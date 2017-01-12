@@ -1,7 +1,7 @@
 SpaceDust = Polygon:extend()
 
 function SpaceDust:new(xCenter, yCenter, red, green, blue)
-  self.radius = 1
+  self.radius = 2
   
   local vertices = --[[{  -1 - math.random(0, 1),  0 ,
                        1 + math.random(0, 1),  0 ,
