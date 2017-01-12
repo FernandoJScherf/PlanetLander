@@ -3,8 +3,8 @@ Explotion = Point:extend()
 function Explotion:new(xCenter, yCenter, red, green, blue, radiusMax)
   self.radius = 1
   self.radiusVar = 3
-  self.radiusMax = radiusMax + radiusMax / 2--Maximum radius of the explosion.
-  self.expansionVelocity = 50 --Velocity of radius expansion.
+  self.radiusMax = radiusMax + radiusMax --Maximum radius of the explosion.
+  self.expansionVelocity = 60 --Velocity of radius expansion.
   self.red = red
   self.green = green
   self.blue = blue

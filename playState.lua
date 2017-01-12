@@ -27,7 +27,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 5
+  nSpaceRocks = 20
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -35,7 +35,7 @@ function play:init()
     
     entities[i] = SpaceRock(math.random(-extSpace, screenWidth + extSpace),
                   math.random(-extSpace, screenWidth + extSpace),
-                  color + 30, color, color, 15)
+                  color + 30, color, color, 10)
                 
     entities[i].xSpeed = math.random( -6, 6) 
     entities[i].ySpeed = math.random( -6, 6) 
@@ -162,10 +162,6 @@ function play:update(dt)
               entities[j].xSpeed = xSpeedJ
               entities[j].ySpeed = ySpeedJ
               
-              --table.remove(entities, j)
-              --table.remove(entities, i)
-              
-              --i = i - 1
             elseif entities[j]:is(SpaceDust) then--Against SpaceDust.
               table.remove(entities, j)
               i = i - 1
@@ -194,39 +190,25 @@ function play:update(dt)
                 --new two rocks left after the collision makes them have
                 --half the area of the original rock.
 
-                
                 local angle = math.atan2(xSpeedI, ySpeedI) - math.pi / 2
-                local p1X = radius * math.cos(angle)
-                local p1Y = radius * math.sin(angle)
+                for k = 1, 2 do
+                  local p1X = radius * math.cos(angle)
+                  local p1Y = radius * math.sin(angle)
 
-                table.insert(entities, 
-                SpaceRock(entities[i].xCenter + p1X,
-                          entities[i].yCenter + p1Y,
-                          entities[i].red,
-                          entities[i].green,
-                          entities[i].blue,
-                          newRadius))
-                      
-                --RESULTS OF THE ELASTIC COLLISION
-                entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
-                entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
+                  table.insert(entities, 
+                  SpaceRock(entities[i].xCenter + p1X,
+                            entities[i].yCenter + p1Y,
+                            entities[i].red,
+                            entities[i].green,
+                            entities[i].blue,
+                            newRadius))
+                        
+                  --RESULTS OF THE ELASTIC COLLISION
+                  entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
+                  entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
+                  angle = angle + math.pi
+                end
                   
-                angle = math.atan2(xSpeedI, ySpeedI) + math.pi / 2
-                p1X = radius * math.cos(angle)
-                p1Y = radius * math.sin(angle)
-
-                table.insert(entities, 
-                SpaceRock(entities[i].xCenter + p1X,
-                          entities[i].yCenter + p1Y,
-                          entities[i].red,
-                          entities[i].green,
-                          entities[i].blue,
-                          newRadius))
-                      
-                --RESULTS OF THE ELASTIC COLLISION
-                entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
-                entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
-
               end
               --Explotion.
               insertFullExplotion(
@@ -249,6 +231,7 @@ function play:update(dt)
   end
    
   i = 1
+  
   while i <= #entities do
     --update current entity:
     entities[i]:update(dt)
@@ -257,6 +240,16 @@ function play:update(dt)
       table.remove(entities, i)
       i = i - 1
     end  
+    --If something gets out of bounds, destroy it.
+    if  entities[i].xCenter > screenWidth + extSpace or
+        entities[i].xCenter < -extSpace or
+        entities[i].yCenter > screenHeight + extSpace or
+        entities[i].yCenter < -extSpace then
+      
+      table.remove(entities, i)
+      i = i - 1
+    end  
+    
     i = i + 1
   end
 
@@ -264,6 +257,32 @@ end
 
 function play:draw()
   setDrawTarget()  
+  
+  local contExplotion = 0
+  local contBullet = 0
+  local contShip = 0
+  local contSpaceRock = 0
+  local contSpaceDust = 0
+  for i = 1, #entities do
+    if entities[i]:is(Explotion) then
+      contExplotion = contExplotion + 1
+    elseif entities[i]:is(Bullet) then
+      contBullet = contBullet + 1
+    elseif entities[i]:is(Ship) then
+      contShip = contShip + 1
+    elseif entities[i]:is(SpaceRock) then
+      contSpaceRock = contSpaceRock + 1
+    elseif entities[i]:is(SpaceDust) then
+      contSpaceDust = contSpaceDust + 1
+    end
+  end
+  
+  --Testeststststs prints!
+  love.graphics.print("contSpaceDust" .. contSpaceDust, 0, 10)
+  love.graphics.print("contSpaceRock" .. contSpaceRock, 0, 20)
+  love.graphics.print("contShip" .. contShip, 0, 30)
+  love.graphics.print("contBullet" .. contBullet, 0, 40)
+  love.graphics.print("contExplotion" .. contExplotion, 0, 50)
   
   --DRAW EVERYTHING
   --Draw Atmosphere:
