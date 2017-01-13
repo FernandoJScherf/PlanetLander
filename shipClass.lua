@@ -4,6 +4,8 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.radius = 2 --Some margin for the player
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
+  self.shipSpeed = 0
+  self.speedMaxLanding = 50
   
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -35,6 +37,9 @@ local timeToShoot = 0
 function Ship:update(dt)
 
   Ship.super.update(self, dt)
+  
+  --Calculate Ship's Speed in pixels per second.
+  self.shipSpeed = math.sqrt((self.xSpeed ^ 2) + (self.ySpeed ^ 2))
   
   --SHIP CONTROL:
   local pi = math.pi

@@ -1,5 +1,5 @@
 --PLAY GAMESTATE CALLBACKS:
-local circleRadius = 14
+local circleRadius = 24
 local ship ; local spaceDust = {} ; local spaceRock = {}
 
 local extSpace = 40--screenWidth/4
@@ -13,7 +13,11 @@ function play:init()
   entities[1].xSpeed = 25
   entities[1].aSpeed = 0
   --ship = entities[1]
-  --entities[2] = Explotion(200, 150, 150, 150, 150, 50)
+  --[[entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
+         math.random(0, 100), math.random(0, 100), math.random(150, 170))
+  entities[2].xSpeed = 25
+  entities[2].aSpeed = 0
+  entities[2].freeze = true]]
   
   local nSpaceDusts = math.floor( screenWidth / 4 )
   local limit = nSpaceDusts + #entities
@@ -27,7 +31,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 20
+  nSpaceRocks = 2
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -110,28 +114,54 @@ function play:update(dt)
     if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
       centerScreenX, centerScreenY, circleRadius) then
       
-      --Special Conditions for the ship's collision
-      if entities[i]:is(Ship) or entities[i]:is(Bullet) then
+      --Special Conditions for the ship's and bullet's collision
+      if entities[i]:is(Ship) then
+        --If the ship meets certain conditions, it lands
+        --Otherwise, it is DESTROYED.
+        local sumMax = 20 
+        
+        if entities[i].shipSpeed > entities[i].speedMaxLanding then
+          --REMOVE POINTS HERE.
+          insertFullExplotion(
+                  entities[i].xCenter, 
+                  entities[i].yCenter,
+                  entities[i].radius + 5, --Bigger radius to make it cooler.
+                  0, 
+                  0)     
+          table.remove(entities, i)
+          i = i - 1
+        else
+          entities[i].freeze = true
+        end
+      elseif entities[i]:is(Bullet) then
+      --REMOVE POINTS HERE.
         insertFullExplotion(
                 entities[i].xCenter, 
                 entities[i].yCenter,
-                entities[i].radius + 5,
+                entities[i].radius + 5, --Bigger radius to make it cooler.
                 0, 
                 0)     
+        table.remove(entities, i)
+        i = i - 1
+        
       --If the entity colliding is not of the type explotion
       --Create an explotion!
-      elseif not entities[i]:is(Explotion) then
+    elseif not entities[i]:is(Explotion) then
+      --REMOVES POINTS HERE IF ITS AN SPACE ROCK.
         insertFullExplotion(
                 entities[i].xCenter, 
                 entities[i].yCenter,
                 entities[i].radius,
                 0, 
                 0)
+        table.remove(entities, i)
+        i = i - 1
+        
+      elseif entities[i]:is(Explotion) then
+        table.remove(entities, i)
+        i = i - 1
       end      
       
-      table.remove(entities, i)
-      i = i - 1
-
     else
     --ENTITIES VS ENTITIES:
       for j = i + 1, #entities do
@@ -190,7 +220,7 @@ function play:update(dt)
                 --new two rocks left after the collision makes them have
                 --half the area of the original rock.
 
-                local angle = math.atan2(xSpeedI, ySpeedI) - math.pi / 2
+                local angle = math.atan2(ySpeedI, xSpeedI) - math.pi / 2
                 for k = 1, 2 do
                   local p1X = radius * math.cos(angle)
                   local p1Y = radius * math.sin(angle)
@@ -263,6 +293,8 @@ function play:draw()
   local contShip = 0
   local contSpaceRock = 0
   local contSpaceDust = 0
+  local shipSpeed = 0
+  local speedMaxLanding = 0
   for i = 1, #entities do
     if entities[i]:is(Explotion) then
       contExplotion = contExplotion + 1
@@ -270,6 +302,8 @@ function play:draw()
       contBullet = contBullet + 1
     elseif entities[i]:is(Ship) then
       contShip = contShip + 1
+      shipSpeed = entities[i].shipSpeed
+      speedMaxLanding = entities[i].speedMaxLanding
     elseif entities[i]:is(SpaceRock) then
       contSpaceRock = contSpaceRock + 1
     elseif entities[i]:is(SpaceDust) then
@@ -278,18 +312,22 @@ function play:draw()
   end
   
   --Testeststststs prints!
-  love.graphics.print("contSpaceDust" .. contSpaceDust, 0, 10)
-  love.graphics.print("contSpaceRock" .. contSpaceRock, 0, 20)
-  love.graphics.print("contShip" .. contShip, 0, 30)
-  love.graphics.print("contBullet" .. contBullet, 0, 40)
-  love.graphics.print("contExplotion" .. contExplotion, 0, 50)
+  love.graphics.print("contSpaceDust: " .. contSpaceDust, 0, 10)
+  love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
+  love.graphics.print("contShip: " .. contShip, 0, 30)
+  love.graphics.print("contBullet: " .. contBullet, 0, 40)
+  love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
+  love.graphics.print("shipSpeed: " .. 
+    (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
+  love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
   
   --DRAW EVERYTHING
   --Draw Atmosphere:
   local totalRadius
   local margen = 2--Add a margen so collisions occur inside visible circle.
-  for i = 16, 2, -4 do
-    love.graphics.setColor(116 / i, 116 / i, 232 / i)
+  for i = circleRadius, 2, -4 do
+    local div = 116 / i
+    love.graphics.setColor(div, div, div + div)
     totalRadius = circleRadius + i * 2 + margen
     love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
       totalRadius)

@@ -19,11 +19,15 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   self.red = red
   self.green = green
   self.blue = blue
+  
+  self.freeze = false --If this is true, the object doesn't move at all.
+  --It stop being affected by gravity, translated and rotated.
 end
 
 function Polygon:update(dt)
-  Polygon.super.update(self, dt)
-    
+  if not self.freeze then
+    Polygon.super.update(self, dt)
+      
     local aSpeedTimesDT = self.aSpeed * dt
     for i = 1, #self.vertices, 2 do
       --Translation of vertices
@@ -53,15 +57,16 @@ function Polygon:update(dt)
     elseif self.rotation <= -pi2 then
       self.rotation = self.rotation + pi2
     end
-    --Traslation of the Center of the Polygon
+    --Translation of the Center of the Polygon
       --self.xCenter = self.xCenter + xSpeedTimesDT
       --self.yCenter = self.yCenter + ySpeedTimesDT
+  end
 end
 
 function Polygon:draw()
   love.graphics.setColor(self.red, self.green, self.blue)
   love.graphics.polygon(fillOrLine, self.vertices)
-  love.graphics.points(self.xCenter, self.yCenter)
+  --love.graphics.points(self.xCenter, self.yCenter)
   love.graphics.setColor(255, 255, 255)
   --love.graphics.print(string.format("%.2f", self.rotation), self.xCenter, self.yCenter)
   --[[love.graphics.print("gX" .. gX, 10, 140)
