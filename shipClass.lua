@@ -48,13 +48,28 @@ function Ship:teleTransport(x, y)
   end
 end
 
+function Ship:accel(accel, dt)
+  local angle = self.rotation
+  local xSpeedAdded = accel * math.cos(angle) * dt
+  local ySpeedAdded = accel * math.sin(angle) * dt
+  local angleDis = angle + math.pi
+
+  propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
+    angleDis, self.xSpeed, self.ySpeed)
+  propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
+    angleDis, self.xSpeed, self.ySpeed)
+
+  self.xSpeed = self.xSpeed + xSpeedAdded
+  self.ySpeed = self.ySpeed + ySpeedAdded
+end
+
 local timeToShoot = 0
 function Ship:update(dt)
   
   local pi = math.pi
   local piDiv2 = pi / 2
 
-  if self.state == 1 then --If flying.
+  if self.state == 1 then --ONLY IF FLYING.
     Ship.super.update(self, dt)
   end
 
@@ -82,23 +97,15 @@ function Ship:update(dt)
       self.rotation - piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
-  if love.keyboard.isDown(self.accelerate) then
+  if love.keyboard.isDown(self.accelerate) and self.state == 1 then
      
-    local speedAddedPerSecond = 3 --pixels per second
-    local angle = self.rotation
-    local xSpeedAdded = speedAddedPerSecond * math.cos(angle)
-    local ySpeedAdded = speedAddedPerSecond * math.sin(angle)
-    local angleDis = angle + pi
-    
-    propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
-      angleDis, self.xSpeed, self.ySpeed)
-    propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
-      angleDis, self.xSpeed, self.ySpeed)
-    
-    self.xSpeed = self.xSpeed + xSpeedAdded
-    self.ySpeed = self.ySpeed + ySpeedAdded
+    self:accel(100, dt)
   end
   if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.5 then
+    if self.state == 1 then
+      self:accel(-3, dt)  -- Every shot makes the ship go slower.
+    end
+    
     local random = math.random(0, 50)
     table.insert(entities, Bullet(
         self.vertices[3],
@@ -124,6 +131,7 @@ function Ship:update(dt)
     timeToShoot = timeToShoot + dt
   end
   
+  local accelerate = false
   if self.state == 2 then --IF IN LANDING STATE.
     
     --Angle of line from PlanetCenter to ShipCenter:
@@ -137,6 +145,7 @@ function Ship:update(dt)
     
     self:teleTransport(surfacePointPlanetX, surfacePointPlanetY)
 
+    self.aSpeed = 0
     self.xSpeed = 0
     self.ySpeed = 0
     
@@ -162,7 +171,23 @@ function Ship:update(dt)
       end
     else --If the ship is already in the correct angle.
       self.state = 4 --TO TAKINGOFF STATE.
+      acceleratePressed = false
+    end
+    
+  elseif self.state == 4 then --IF IN TAKINGOFF STATE.
+    if love.keyboard.isDown(self.accelerate) then   
+      acceleratePressed = true
+      --Takeoff:
+      Ship.super.update(self, dt)
+      self:accel(self.g + self.g/2, dt)
+
+      if not checkColl(self.xCenter, self.yCenter, self.radius + 2,
+        centerScreenX, centerScreenY, circleRadius + 3) then
+        self.state = 1
+      end
+    elseif acceleratePressed then
+      self.state = 2
     end
   end
-  print("State " .. self.state)
+      print(self.g)
 end

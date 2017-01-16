@@ -5,6 +5,8 @@ function Point:new(xCenter, yCenter)
   self.xCenter = xCenter 
   self.yCenter = yCenter 
   
+  self.g = 0
+  
   self.xSpeed = 0 -- pps pixel per second
   self.ySpeed = 0 -- pps pixel per second
 end
@@ -24,6 +26,7 @@ function Point:update(dt)
     local angle = math.atan2((Py - Yi), (Px - Xi))
     local gX = g * math.cos(angle)
     local gY = g * math.sin(angle)
+    self.g = g
     --2)
     self.xSpeed = gX * dt + self.xSpeed
     self.ySpeed = gY * dt + self.ySpeed
