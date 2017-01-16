@@ -1,11 +1,13 @@
 Ship = Polygon:extend()
 
 function Ship:new(xCenter, yCenter, red, green, blue)
-  self.radius = 2 --Some margin for the player
+  self.radius = 3 --Some margin for the player
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
   self.shipSpeed = 0
   self.speedMaxLanding = 50
+  self.state = 1 --1) Flying. 2) Landed.
+  self.angleC = 0
   
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -33,11 +35,25 @@ function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
   --end
 end
 
+function Ship:teleTransport(x, y)
+  xDistanceToNewPos = x - self.xCenter
+  yDistanceToNewPos = y - self.yCenter
+  self.xCenter = x
+  self.yCenter = y
+  
+  for i = 1, #self.vertices, 2 do
+    self.vertices[i] = self.vertices[i] + xDistanceToNewPos
+    self.vertices[i+1] = self.vertices[i+1] + yDistanceToNewPos
+  end
+end
+
 local timeToShoot = 0
 function Ship:update(dt)
 
-  Ship.super.update(self, dt)
-  
+  if self.state == 1 then --If flying.
+    Ship.super.update(self, dt)
+  end
+
   --Calculate Ship's Speed in pixels per second.
   self.shipSpeed = math.sqrt((self.xSpeed ^ 2) + (self.ySpeed ^ 2))
   
@@ -107,5 +123,35 @@ function Ship:update(dt)
     
   else
     timeToShoot = timeToShoot + dt
+  end
+  
+  if self.state == 2 then --IF IN LANDING STATE.
+    
+      --Angle of line from PlanetCenter to ShipCenter:
+    local y = self.yCenter - centerScreenY
+    local x = self.xCenter - centerScreenX
+    self.angleC = math.atan2(y, x)
+    local radius = self.radius + 3
+    local totalRadius = circleRadius + radius
+    local surfacePointPlanetX = totalRadius * math.cos(self.angleC) + centerScreenX
+    local surfacePointPlanetY = totalRadius * math.sin(self.angleC) + centerScreenY
+    
+    --[[if self.xCenter > centerScreenX then
+      surfacePointPlanetX = surfacePointPlanetX + radius
+    elseif self.xCenter < centerScreenX then
+      surfacePointPlanetX = surfacePointPlanetX - radius
+    end
+    if self.yCenter > surfacePointPlanetY then
+      surfacePointPlanetY = surfacePointPlanetY + radius
+    elseif self.yCenter < surfacePointPlanetY then
+      surfacePointPlanetY = surfacePointPlanetY - radius
+    end]]
+    self:teleTransport(surfacePointPlanetX, surfacePointPlanetY)
+
+    
+    self.xSpeed = 0
+    self.ySpeed = 0
+    
+    self.state = 3 --TO LANDED GAMESTATE
   end
 end

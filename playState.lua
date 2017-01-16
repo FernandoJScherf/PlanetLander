@@ -1,5 +1,5 @@
 --PLAY GAMESTATE CALLBACKS:
-local circleRadius = 24
+
 local ship ; local spaceDust = {} ; local spaceRock = {}
 
 local extSpace = 40--screenWidth/4
@@ -10,7 +10,7 @@ entities = {}
 function play:init()
   entities[1] = Ship(centerScreenX + 50, centerScreenY - 100,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))
-  entities[1].xSpeed = 25
+  --entities[1].xSpeed = 25
   entities[1].aSpeed = 0
   --ship = entities[1]
   --[[entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
@@ -105,8 +105,10 @@ function insertFullExplotion(xCenter, yCenter, radiusMax, xSpeed, ySpeed)
   end
 end
 
+local shipCollidedPlanet
 function play:update(dt)
   local i = 1 
+  shipCollidedPlanet = false
   --CHECK FOR COLLISIONS!!!
   while i <= #entities do
     --ENTITIES AGAINST PLANET: 
@@ -130,8 +132,10 @@ function play:update(dt)
                   0)     
           table.remove(entities, i)
           i = i - 1
-        else
-          entities[i].freeze = true
+        else --If ship is colliding, "softly".
+          shipCollidedPlanet = true
+          --entities[i].freeze = true
+          entities[i].state = 2
         end
       elseif entities[i]:is(Bullet) then
       --REMOVE POINTS HERE.
@@ -288,39 +292,6 @@ end
 function play:draw()
   setDrawTarget()  
   
-  local contExplotion = 0
-  local contBullet = 0
-  local contShip = 0
-  local contSpaceRock = 0
-  local contSpaceDust = 0
-  local shipSpeed = 0
-  local speedMaxLanding = 0
-  for i = 1, #entities do
-    if entities[i]:is(Explotion) then
-      contExplotion = contExplotion + 1
-    elseif entities[i]:is(Bullet) then
-      contBullet = contBullet + 1
-    elseif entities[i]:is(Ship) then
-      contShip = contShip + 1
-      shipSpeed = entities[i].shipSpeed
-      speedMaxLanding = entities[i].speedMaxLanding
-    elseif entities[i]:is(SpaceRock) then
-      contSpaceRock = contSpaceRock + 1
-    elseif entities[i]:is(SpaceDust) then
-      contSpaceDust = contSpaceDust + 1
-    end
-  end
-  
-  --Testeststststs prints!
-  love.graphics.print("contSpaceDust: " .. contSpaceDust, 0, 10)
-  love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
-  love.graphics.print("contShip: " .. contShip, 0, 30)
-  love.graphics.print("contBullet: " .. contBullet, 0, 40)
-  love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
-  love.graphics.print("shipSpeed: " .. 
-    (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
-  love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
-  
   --DRAW EVERYTHING
   --Draw Atmosphere:
   local totalRadius
@@ -344,5 +315,50 @@ function play:draw()
     circleRadius + margen) 
   love.graphics.setColor(255,255,255)
     
+  --I NEED INFORMATION MY BOY.
+  local contExplotion = 0
+  local contBullet = 0
+  local contShip = 0
+  local contSpaceRock = 0
+  local contSpaceDust = 0
+  local shipSpeed = 0
+  local speedMaxLanding = 0
+  local state = 0
+  local angleC = 0
+  local sX = 0
+  local sY = 0
+  
+  for i = 1, #entities do
+    if entities[i]:is(Explotion) then
+      contExplotion = contExplotion + 1
+    elseif entities[i]:is(Bullet) then
+      contBullet = contBullet + 1
+    elseif entities[i]:is(Ship) then
+      contShip = contShip + 1
+      shipSpeed = entities[i].shipSpeed
+      speedMaxLanding = entities[i].speedMaxLanding
+      state = entities[i].state
+      angleC = entities[i].angleC
+      sX = entities[i].xCenter
+      sY = entities[i].yCenter
+    elseif entities[i]:is(SpaceRock) then
+      contSpaceRock = contSpaceRock + 1
+    elseif entities[i]:is(SpaceDust) then
+      contSpaceDust = contSpaceDust + 1
+    end
+  end
+  
+  --Testeststststs prints!
+  love.graphics.print("contSpaceDust: " .. contSpaceDust, 0, 10)
+  love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
+  love.graphics.print("contShip: " .. contShip, 0, 30)
+  love.graphics.print("contBullet: " .. contBullet, 0, 40)
+  love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
+  love.graphics.print("shipSpeed: " .. 
+    (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
+  love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
+  love.graphics.print("state: " .. state, sX + 10, sY)
+  love.graphics.print("shipCollidedPlanet: " .. tostring(shipCollidedPlanet), 0, 90)
+  love.graphics.print("angleC: " .. angleC, 0, 100)
   backToScreenAndUpscale()
 end

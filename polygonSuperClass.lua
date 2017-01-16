@@ -66,7 +66,7 @@ end
 function Polygon:draw()
   love.graphics.setColor(self.red, self.green, self.blue)
   love.graphics.polygon(fillOrLine, self.vertices)
-  --love.graphics.points(self.xCenter, self.yCenter)
+  love.graphics.points(self.xCenter, self.yCenter)
   love.graphics.setColor(255, 255, 255)
   --love.graphics.print(string.format("%.2f", self.rotation), self.xCenter, self.yCenter)
   --[[love.graphics.print("gX" .. gX, 10, 140)

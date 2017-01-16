@@ -20,6 +20,7 @@ function backToScreenAndUpscale()
     love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
 end
 
+  circleRadius = 24
   upscalingFactor = 1
   screenWidth = 512--256*2--256 
   centerScreenX = screenWidth / 2
