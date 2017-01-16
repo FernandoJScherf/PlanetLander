@@ -5,9 +5,10 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
   self.shipSpeed = 0
-  self.speedMaxLanding = 50
+  self.speedMaxLanding = 150
   self.state = 1 --1) Flying. 2) Landed.
   self.angleC = 0
+  self.rotation = 0
   
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -49,6 +50,9 @@ end
 
 local timeToShoot = 0
 function Ship:update(dt)
+  
+  local pi = math.pi
+  local piDiv2 = pi / 2
 
   if self.state == 1 then --If flying.
     Ship.super.update(self, dt)
@@ -57,27 +61,31 @@ function Ship:update(dt)
   --Calculate Ship's Speed in pixels per second.
   self.shipSpeed = math.sqrt((self.xSpeed ^ 2) + (self.ySpeed ^ 2))
   
+  --Calculate Ship's Rotation.
+    --For SHIP, this is the Angle of line from FRONT vertice to ShipCenter:
+    local x = self.vertices[3] - self.xCenter
+    local y = self.vertices[4] - self.yCenter
+    self.rotation = math.atan2(y, x)
+  
   --SHIP CONTROL:
-  local pi = math.pi
-  local pi2 = pi*2
   local acceleration = 10
   local waitTime = 0.07
-  if love.keyboard.isDown(self.rotRight) then
+  if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed + acceleration * dt
     propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
-      self.rotation + pi, self.xSpeed, self.ySpeed)
+      self.rotation + piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
-  if love.keyboard.isDown(self.rotLeft) then
+  if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed - acceleration * dt
     propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
-      self.rotation + pi2, self.xSpeed, self.ySpeed)
+      self.rotation - piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
   if love.keyboard.isDown(self.accelerate) then
      
     local speedAddedPerSecond = 3 --pixels per second
-    local angle = self.rotation + pi/2
+    local angle = self.rotation
     local xSpeedAdded = speedAddedPerSecond * math.cos(angle)
     local ySpeedAdded = speedAddedPerSecond * math.sin(angle)
     local angleDis = angle + pi
@@ -101,22 +109,13 @@ function Ship:update(dt)
     
     timeToShoot = 0
     
-    local angle = self.rotation
+    local angle = self.rotation - piDiv2
     local ent = entities[#entities]
-    -- Rotate vertices depending on ship angle when it shoots.
-    for i = 1, #ent.vertices, 2 do
-      local xMinusOx = ent.vertices[i] - ent.xCenter
-      local yMinusOy = ent.vertices[i+1] - ent.yCenter 
-      --x'= (x - Ox).cos(ang) - (y - Oy).sin(ang) + Ox
-      ent.vertices[i] = xMinusOx * math.cos(angle) - 
-                     yMinusOy*math.sin(angle) + ent.xCenter
-      ent.vertices[i+1] = xMinusOx * math.sin(angle) + 
-                       yMinusOy*math.cos(angle) + ent.yCenter 
-    end
+    ent:rotate(1, angle) --Rotate vertices of BULLET depending on ship angle when it shoots.
 
     --Give velocity to bullet:
     local v  = 200 --pixels per second.
-    angle = angle + math.pi/2
+    angle = angle + piDiv2
     ent.xSpeed = v*math.cos(angle) + self.xSpeed
     ent.ySpeed = v*math.sin(angle) + self.ySpeed
     ent.aSpeed = 0
@@ -127,31 +126,43 @@ function Ship:update(dt)
   
   if self.state == 2 then --IF IN LANDING STATE.
     
-      --Angle of line from PlanetCenter to ShipCenter:
-    local y = self.yCenter - centerScreenY
-    local x = self.xCenter - centerScreenX
+    --Angle of line from PlanetCenter to ShipCenter:
+    y = self.yCenter - centerScreenY
+    x = self.xCenter - centerScreenX
     self.angleC = math.atan2(y, x)
     local radius = self.radius + 3
     local totalRadius = circleRadius + radius
     local surfacePointPlanetX = totalRadius * math.cos(self.angleC) + centerScreenX
     local surfacePointPlanetY = totalRadius * math.sin(self.angleC) + centerScreenY
     
-    --[[if self.xCenter > centerScreenX then
-      surfacePointPlanetX = surfacePointPlanetX + radius
-    elseif self.xCenter < centerScreenX then
-      surfacePointPlanetX = surfacePointPlanetX - radius
-    end
-    if self.yCenter > surfacePointPlanetY then
-      surfacePointPlanetY = surfacePointPlanetY + radius
-    elseif self.yCenter < surfacePointPlanetY then
-      surfacePointPlanetY = surfacePointPlanetY - radius
-    end]]
     self:teleTransport(surfacePointPlanetX, surfacePointPlanetY)
 
-    
     self.xSpeed = 0
     self.ySpeed = 0
     
-    self.state = 3 --TO LANDED GAMESTATE
+    self.state = 3 --TO ROTATING GAMESTATE.
+  elseif self.state == 3 then--IF IN ROTATING STATE.
+    local angleSSubC = self.rotation - self.angleC
+    local maxDif = pi / 32
+    --If there is too much difference betweeen angles.
+    if math.abs(angleSSubC) > maxDif then  
+      --Determine if ship should rotate clockwise or anti-clockwise:s
+      if y >= 0 then
+        if angleSSubC < 0 and math.abs(angleSSubC) < pi then
+          self:rotate(dt, 1) --Clockwise
+        else
+          self:rotate(dt, -1) --Anti-Clockwise
+        end
+      else
+        if angleSSubC > 0 and math.abs(angleSSubC) < pi then
+          self:rotate(dt, -1) --Anti-Clockwise
+        else
+          self:rotate(dt, 1) --Clockwise
+        end
+      end
+    else --If the ship is already in the correct angle.
+      self.state = 4 --TO TAKINGOFF STATE.
+    end
   end
+  print("State " .. self.state)
 end

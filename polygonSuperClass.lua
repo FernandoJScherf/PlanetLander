@@ -13,7 +13,7 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   
   self.vertices = vertices
   self.aSpeed = math.random(-3, 3) --math.pi() --The amount that the angle will change per second.
-  self.rotation = 0
+  --self.rotation = 0
   --Is in Radians. 0.1 = aprox 5,72958 degrees.
   
   self.red = red
@@ -24,42 +24,40 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   --It stop being affected by gravity, translated and rotated.
 end
 
+function Polygon:rotate(dt, angleSpeedOfRotation)
+  local angleOfRotation = angleSpeedOfRotation * dt
+  for i = 1, #self.vertices, 2 do
+  
+    --ROTATION
+      local xMinusOx = self.vertices[i] - self.xCenter
+      local yMinusOy = self.vertices[i+1] - self.yCenter 
+    --x'= (x - Ox).cos(ang) - (y - Oy).sin(ang) + Ox
+      self.vertices[i] = xMinusOx * math.cos(angleOfRotation) - 
+                     yMinusOy*math.sin(angleOfRotation) +
+                     self.xCenter                            
+    --y'= (x - Ox).sin(ang) - (y - Oy).cos(ang)
+      self.vertices[i+1] = xMinusOx * math.sin(angleOfRotation) + 
+                     yMinusOy*math.cos(angleOfRotation) +
+                     self.yCenter 
+      
+  end
+  
+end
+
 function Polygon:update(dt)
   if not self.freeze then
+    --Gravity:
     Polygon.super.update(self, dt)
-      
-    local aSpeedTimesDT = self.aSpeed * dt
+    
+    --Translation of vertices:
     for i = 1, #self.vertices, 2 do
-      --Translation of vertices
       self.vertices[i] = self.xSpeed * dt + self.vertices[i]
       self.vertices[i+1] = self.ySpeed * dt + self.vertices[i+1]
-      
-      --ROTATION
-        local xMinusOx = self.vertices[i] - self.xCenter
-        local yMinusOy = self.vertices[i+1] - self.yCenter 
-      --x'= (x - Ox).cos(ang) - (y - Oy).sin(ang) + Ox
-        self.vertices[i] = xMinusOx * math.cos(aSpeedTimesDT) - 
-                       yMinusOy*math.sin(aSpeedTimesDT) +
-                       self.xCenter                            
-      --y'= (x - Ox).sin(ang) - (y - Oy).cos(ang)
-        self.vertices[i+1] = xMinusOx * math.sin(aSpeedTimesDT) + 
-                       yMinusOy*math.cos(aSpeedTimesDT) +
-                       self.yCenter 
-        
-        --self.vertices[i]    =   x  +   xSpeedTimesDT
-        --self.vertices[i+1]  =   y  +   ySpeedTimesDT
     end
-    --Save new angle of total rotation:
-    self.rotation = self.rotation + aSpeedTimesDT
-    local pi2 = math.pi * 2
-    if self.rotation >= pi2 then
-      self.rotation = self.rotation - pi2
-    elseif self.rotation <= -pi2 then
-      self.rotation = self.rotation + pi2
-    end
-    --Translation of the Center of the Polygon
-      --self.xCenter = self.xCenter + xSpeedTimesDT
-      --self.yCenter = self.yCenter + ySpeedTimesDT
+    
+    --Rotation of vertices:
+    self:rotate(dt, self.aSpeed)
+    
   end
 end
 

@@ -135,7 +135,9 @@ function play:update(dt)
         else --If ship is colliding, "softly".
           shipCollidedPlanet = true
           --entities[i].freeze = true
-          entities[i].state = 2
+          if entities[i].state == 1 then
+            entities[i].state = 2
+          end
         end
       elseif entities[i]:is(Bullet) then
       --REMOVE POINTS HERE.
@@ -324,6 +326,7 @@ function play:draw()
   local shipSpeed = 0
   local speedMaxLanding = 0
   local state = 0
+  local rotation = 0
   local angleC = 0
   local sX = 0
   local sY = 0
@@ -341,6 +344,7 @@ function play:draw()
       angleC = entities[i].angleC
       sX = entities[i].xCenter
       sY = entities[i].yCenter
+      rotation = entities[i].rotation
     elseif entities[i]:is(SpaceRock) then
       contSpaceRock = contSpaceRock + 1
     elseif entities[i]:is(SpaceDust) then
@@ -357,8 +361,12 @@ function play:draw()
   love.graphics.print("shipSpeed: " .. 
     (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
   love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
-  love.graphics.print("state: " .. state, sX + 10, sY)
   love.graphics.print("shipCollidedPlanet: " .. tostring(shipCollidedPlanet), 0, 90)
-  love.graphics.print("angleC: " .. angleC, 0, 100)
+  
+  love.graphics.print("state: " .. state, sX + 10, sY)
+  love.graphics.print("angleC: " .. angleC, sX + 10, sY + 10)
+  love.graphics.print("rotation: " .. rotation, sX + 10, sY + 20)
+  love.graphics.print(math.abs(rotation - angleC) .. " > " .. math.pi / 32  , sX + 10, sY + 30)
+  
   backToScreenAndUpscale()
 end
