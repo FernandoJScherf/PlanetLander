@@ -116,27 +116,28 @@ function play:update(dt)
     if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
       centerScreenX, centerScreenY, circleRadius) then
       
-      --Special Conditions for the ship's and bullet's collision
+      --Special Conditions for the ship's collision
       if entities[i]:is(Ship) then
-        --If the ship meets certain conditions, it lands
-        --Otherwise, it is DESTROYED.
-        local sumMax = 20 
-        
-        if entities[i].shipSpeed > entities[i].speedMaxLanding then
-          --REMOVE POINTS HERE.
-          insertFullExplotion(
-                  entities[i].xCenter, 
-                  entities[i].yCenter,
-                  entities[i].radius + 5, --Bigger radius to make it cooler.
-                  0, 
-                  0)     
-          table.remove(entities, i)
-          i = i - 1
-        else --If ship is colliding, "softly".
-          shipCollidedPlanet = true
-          --entities[i].freeze = true
-          if entities[i].state == 1 then
-            entities[i].state = 2
+        if entities[i].collidable then
+          --If the ship meets certain conditions, it lands
+          --Otherwise, it is DESTROYED.
+          
+          if entities[i].shipSpeed > entities[i].speedMaxLanding then
+            --REMOVE POINTS HERE.
+            insertFullExplotion(
+                    entities[i].xCenter, 
+                    entities[i].yCenter,
+                    entities[i].radius + 5, --Bigger radius to make it cooler.
+                    0, 
+                    0)     
+            table.remove(entities, i)
+            i = i - 1
+          else --If ship is colliding, "softly".
+            shipCollidedPlanet = true
+            --entities[i].freeze = true
+            if entities[i].state == 1 then
+              entities[i].state = 2
+            end
           end
         end
       elseif entities[i]:is(Bullet) then

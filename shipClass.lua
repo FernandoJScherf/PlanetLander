@@ -9,6 +9,7 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.state = 1 --1) Flying. 2) Landed.
   self.angleC = 0
   self.rotation = 0
+  self.collidable = true
   
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -69,10 +70,6 @@ function Ship:update(dt)
   local pi = math.pi
   local piDiv2 = pi / 2
 
-  if self.state == 1 then --ONLY IF FLYING.
-    Ship.super.update(self, dt)
-  end
-
   --Calculate Ship's Speed in pixels per second.
   self.shipSpeed = math.sqrt((self.xSpeed ^ 2) + (self.ySpeed ^ 2))
   
@@ -99,7 +96,7 @@ function Ship:update(dt)
   end
   if love.keyboard.isDown(self.accelerate) and self.state == 1 then
      
-    self:accel(100, dt)
+    self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
   end
   if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.5 then
     if self.state == 1 then
@@ -132,7 +129,16 @@ function Ship:update(dt)
   end
   
   local accelerate = false
-  if self.state == 2 then --IF IN LANDING STATE.
+  if self.state == 1 then --ONLY IF FLYING.
+    Ship.super.update(self, dt)
+    
+    if not self.collidable and (not checkColl(self.xCenter, self.yCenter, self.radius,
+      centerScreenX, centerScreenY, circleRadius) or 
+      not love.keyboard.isDown(self.accelerate)) then
+        self.collidable = true
+    end
+    
+  elseif self.state == 2 then --IF IN LANDING STATE.
     
     --Angle of line from PlanetCenter to ShipCenter:
     y = self.yCenter - centerScreenY
@@ -150,6 +156,7 @@ function Ship:update(dt)
     self.ySpeed = 0
     
     self.state = 3 --TO ROTATING GAMESTATE.
+    
   elseif self.state == 3 then--IF IN ROTATING STATE.
     local angleSSubC = self.rotation - self.angleC
     local maxDif = pi / 32
@@ -158,36 +165,25 @@ function Ship:update(dt)
       --Determine if ship should rotate clockwise or anti-clockwise:s
       if y >= 0 then
         if angleSSubC < 0 and math.abs(angleSSubC) < pi then
-          self:rotate(dt, 1) --Clockwise
+          self:rotate(dt, 3) --Clockwise
         else
-          self:rotate(dt, -1) --Anti-Clockwise
+          self:rotate(dt, -3) --Anti-Clockwise
         end
       else
         if angleSSubC > 0 and math.abs(angleSSubC) < pi then
-          self:rotate(dt, -1) --Anti-Clockwise
+          self:rotate(dt, -3) --Anti-Clockwise
         else
-          self:rotate(dt, 1) --Clockwise
+          self:rotate(dt, 3) --Clockwise
         end
       end
     else --If the ship is already in the correct angle.
       self.state = 4 --TO TAKINGOFF STATE.
-      acceleratePressed = false
     end
     
   elseif self.state == 4 then --IF IN TAKINGOFF STATE.
     if love.keyboard.isDown(self.accelerate) then   
-      acceleratePressed = true
-      --Takeoff:
-      Ship.super.update(self, dt)
-      self:accel(self.g + self.g/2, dt)
-
-      if not checkColl(self.xCenter, self.yCenter, self.radius + 2,
-        centerScreenX, centerScreenY, circleRadius + 3) then
-        self.state = 1
-      end
-    elseif acceleratePressed then
-      self.state = 2
+      self.state = 1
+      self.collidable = false
     end
   end
-      print(self.g)
 end
