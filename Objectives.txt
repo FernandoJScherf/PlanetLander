@@ -1,0 +1,19 @@
+16: Finish landing implementation.
+17: Finish landing implementation.
+18: Work on sound.
+19: Work on sound.
+20: Add Scores, increading difficulty, levels, etc.
+21: Add Scores, increading difficulty, levels, etc.
+22: Finish adding scores, levels, etc.
+23: Work on menu and HighScore Table 
+24: Work on menu and HighScore Table
+25: Add safe practice levels (How to move and shoot, how to land)
+26: (Happy Birthday 24!) Add safe practice levels (How to move and shoot, how to land)
+27: Add safe practice levels (How to move and shoot, how to land)
+28: Make manual and Itch.io page.
+29: Make manual and Itch.io page.
+30: RELEASE. RELEASE. RELEASE!!!!!!!
+
+If there is extra time:
+Two days: Make trialer.
+Plus four days: Add aliens.
