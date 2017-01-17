@@ -8,10 +8,11 @@ local nSpaceRocks
 entities = {}
 
 function play:init()
-  entities[1] = Ship(centerScreenX + 50, centerScreenY - 100,
+  entities[1] = Ship(centerScreenX + 50, centerScreenY + 70,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))
   --entities[1].xSpeed = 25
   entities[1].aSpeed = 0
+  entities[1]:rotate(1, math.pi / 2 + 0.2)
   --ship = entities[1]
   --[[entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))

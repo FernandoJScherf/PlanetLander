@@ -65,6 +65,7 @@ function Ship:accel(accel, dt)
 end
 
 local timeToShoot = 0
+local yS; local xS
 function Ship:update(dt)
   
   local pi = math.pi
@@ -128,7 +129,6 @@ function Ship:update(dt)
     timeToShoot = timeToShoot + dt
   end
   
-  local accelerate = false
   if self.state == 1 then --ONLY IF FLYING.
     Ship.super.update(self, dt)
     
@@ -141,9 +141,9 @@ function Ship:update(dt)
   elseif self.state == 2 then --IF IN LANDING STATE.
     
     --Angle of line from PlanetCenter to ShipCenter:
-    y = self.yCenter - centerScreenY
-    x = self.xCenter - centerScreenX
-    self.angleC = math.atan2(y, x)
+    yS = self.yCenter - centerScreenY
+    xS = self.xCenter - centerScreenX
+    self.angleC = math.atan2(yS, xS)
     local radius = self.radius + 3
     local totalRadius = circleRadius + radius
     local surfacePointPlanetX = totalRadius * math.cos(self.angleC) + centerScreenX
@@ -163,7 +163,7 @@ function Ship:update(dt)
     --If there is too much difference betweeen angles.
     if math.abs(angleSSubC) > maxDif then  
       --Determine if ship should rotate clockwise or anti-clockwise:s
-      if y >= 0 then
+      if yS >= 0 then
         if angleSSubC < 0 and math.abs(angleSSubC) < pi then
           self:rotate(dt, 3) --Clockwise
         else
