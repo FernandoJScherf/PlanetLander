@@ -5,7 +5,7 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
   self.shipSpeed = 0
-  self.speedMaxLanding = 150
+  self.speedMaxLanding = 50
   self.state = 1 --1) Flying. 2) Landed.
   self.angleC = 0
   self.rotation = 0
@@ -20,21 +20,26 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   Ship.super.new(self, xCenter, yCenter, vertices, red, green, blue)
 end
 
-
-function propulDust(dt, waitTime, x, y, angle, xSpeedObject, ySpeedObject)
-  --if counter <= waitTime then --Seconds between creation of dust.
-
-  --else 
+--The variable that controls when the propulsors create new SpaceDust:
+local time = 0
+function propulDust(x, y, angle, xSpeedObject, ySpeedObject)
+  --To add some delay:
+  if time > 0.12 then 
     local random = math.random(0, 100)
     table.insert(entities, SpaceDust(x, y,
                   127 + random, 16 + random, 16 + random))
+                
+    insertAndPlaySE(sourcePropulsor)
     
     --Give velocity to dust:
     local v  = 40 --pixels per second.
     local ent = entities[#entities]
     ent.xSpeed = v*math.cos(angle) + xSpeedObject
     ent.ySpeed = v*math.sin(angle) + ySpeedObject
-  --end
+    
+    time = 0
+    
+  end
 end
 
 function Ship:teleTransport(x, y)
@@ -55,9 +60,12 @@ function Ship:accel(accel, dt)
   local ySpeedAdded = accel * math.sin(angle) * dt
   local angleDis = angle + math.pi
 
-  propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
+  local saveTime = time
+  propulDust(self.vertices[7], self.vertices[8], 
     angleDis, self.xSpeed, self.ySpeed)
-  propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
+  time = saveTime
+  --So both propulsors create the same amount of space dust at the same time!
+  propulDust(self.vertices[11], self.vertices[12], 
     angleDis, self.xSpeed, self.ySpeed)
 
   self.xSpeed = self.xSpeed + xSpeedAdded
@@ -67,6 +75,9 @@ end
 local timeToShoot = 0
 local yS; local xS
 function Ship:update(dt)
+  --The variable that controls when the propulsors create new SpaceDust:
+  --Necesary for propulDust function.
+  time = time + dt
   
   local pi = math.pi
   local piDiv2 = pi / 2
@@ -85,13 +96,13 @@ function Ship:update(dt)
   local waitTime = 0.07
   if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed + acceleration * dt
-    propulDust(dt, waitTime, self.vertices[11], self.vertices[12], 
+    propulDust(self.vertices[11], self.vertices[12], 
       self.rotation + piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
   if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed - acceleration * dt
-    propulDust(dt, waitTime, self.vertices[7], self.vertices[8], 
+    propulDust(self.vertices[7], self.vertices[8], 
       self.rotation - piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
@@ -160,9 +171,9 @@ function Ship:update(dt)
   elseif self.state == 3 then--IF IN ROTATING STATE.
     local angleSSubC = self.rotation - self.angleC
     local maxDif = pi / 32
-    --If there is too much difference betweeen angles.
+    --If there is too much difference between angles.
     if math.abs(angleSSubC) > maxDif then  
-      --Determine if ship should rotate clockwise or anti-clockwise:s
+      --Determine if ship should rotate clockwise or anti-clockwise:
       if yS >= 0 then
         if angleSSubC < 0 and math.abs(angleSSubC) < pi then
           self:rotate(dt, 3) --Clockwise

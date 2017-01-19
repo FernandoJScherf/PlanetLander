@@ -3,6 +3,10 @@ SpaceRock = Polygon:extend()
 function SpaceRock:new(xCenter, yCenter, red, green, blue, radius)
   local vertices = {}
   self.radius = radius
+  if radius > maxRadius then
+    print("MAXIMUM RADIUS SUPERATED. Reduced to limit.")
+    self.radius = maxRadius
+  end
   
   --Every Rock is procedurally generated.
   local points = 3 + math.floor( self.radius / 2 )
