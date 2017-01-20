@@ -29,7 +29,7 @@ function propulDust(x, y, angle, xSpeedObject, ySpeedObject)
     table.insert(entities, SpaceDust(x, y,
                   127 + random, 16 + random, 16 + random))
                 
-    insertAndPlaySE(sourcePropulsor)
+    insertAndPlaySE(sourcePropulsor, x, y)
     
     --Give velocity to dust:
     local v  = 40 --pixels per second.
@@ -135,6 +135,9 @@ function Ship:update(dt)
     ent.xSpeed = v*math.cos(angle) + self.xSpeed
     ent.ySpeed = v*math.sin(angle) + self.ySpeed
     ent.aSpeed = 0
+    
+    --Laser sound:
+    insertAndPlaySE(sourceLaser, self.xCenter, self.yCenter)
     
   else
     timeToShoot = timeToShoot + dt

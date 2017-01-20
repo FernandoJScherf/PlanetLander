@@ -7,7 +7,7 @@ entities = {}
 
 sources = {} --Table for sound effects that are being played.
 local sourceShipDest ; local sourceRockExplosion = {}
---[[global sourcePropulsor]]
+--[[global sourcePropulsor ; sourceLaser]]
 
 --LOAD STATE
 ------------------------
@@ -21,8 +21,13 @@ function loadS:enter()
     return love.audio.newSource(soundData)
   end
   sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.25)
-  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.13)
-  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.2)
+  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.1)
+  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.3)
+  sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.3)
+  
+
+  --love.audio.setPosition(centerScreenX, centerScreenY, 0)
+  love.audio.setDistanceModel("exponentclamped")
 end
 
 local loaded = false
@@ -38,6 +43,7 @@ end
 --PLAY STATE:
 -------------------------------------------------------------
 function play:leave()
+  sourceLaser = nil
   sourcePropulsor = nil --This one in particular was global
   --because it also needed to exist in shipClass.lua.
   --So I destroy it when I don't need it anymore.
@@ -137,7 +143,7 @@ function insertFullExplotion(xCenter, yCenter, radiusMax, xSpeed, ySpeed)
   end
 end
 
-function insertAndPlaySE(sourceToClone)
+function insertAndPlaySE(sourceToClone, x, y)
   --If we have too many sound effects in the source table.
   --eliminate the oldest one:
   local maxSounds = 12
@@ -147,6 +153,12 @@ function insertAndPlaySE(sourceToClone)
   end
   --Insert clone of source sound effect to table and play it:
   table.insert(sources, sourceToClone:clone())
+  
+  x = x - centerScreenX
+  y = y - centerScreenY
+  
+  --Divide to attenuate effect of the distance model:
+  sources[#sources]:setPosition(x / 12, y / 12, 0) --Stereo, babe.
   sources[#sources]:play()
 end
 
@@ -154,7 +166,7 @@ end
 local function explosiveSoundRock(ent)
   sourceRockExplosion:setPitch(math.random(25, 50) / 50)
   sourceRockExplosion:setVolume(ent.radius / maxRadius)        
-  insertAndPlaySE(sourceRockExplosion)
+  insertAndPlaySE(sourceRockExplosion, ent.xCenter, ent.yCenter)
 end
 
 local shipCollidedPlanet
@@ -176,7 +188,8 @@ function play:update(dt)
           
           if entities[i].shipSpeed > entities[i].speedMaxLanding then
 
-            insertAndPlaySE(sourceShipDest)
+            insertAndPlaySE(sourceShipDest, entities[i].xCenter, 
+              entities[i].yCenter)
 
             --REMOVE POINTS HERE.
             insertFullExplotion(
@@ -268,7 +281,8 @@ function play:update(dt)
               i = i - 1
             elseif entities[j]:is(Ship) then --Against Ship.
               --Play Ship's Destruction Sound Effect:
-              insertAndPlaySE(sourceShipDest)
+              insertAndPlaySE(sourceShipDest, entities[j].xCenter, 
+                entities[j].yCenter)
               --Explotion!
               insertFullExplotion(
                 entities[j].xCenter, 
