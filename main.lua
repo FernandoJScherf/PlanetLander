@@ -27,12 +27,14 @@ end
   screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2
   fillOrLine = "fill" --For the polygons and circles and stuff.
+  maxRadius = 30 --Maximum radius for Space Rocks.
 
 --LOVE CALLBACKS:
 function love.load()
   menu = {} --Menu gamestate
   play = {} --Game gamestate
   score = {} --High Score gamestate
+  loadS = {} --Load gamestate. To generate the sound effects, which takes its time.
   
   Object = require "classic"
   Gamestate = require "gamestate"
@@ -45,8 +47,8 @@ function love.load()
   require "spaceDustClass"
   require "spaceRockClass"
   require "bulletClass"
-  --require "pointSuperClass"
   require "explotionClass"
+  sfxr = require("sfxr")
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")

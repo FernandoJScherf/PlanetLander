@@ -20,6 +20,6 @@ function menu:keyreleased(key)
   if key == "h" then
     Gamestate.switch(score)
   else
-    Gamestate.switch(play)
+    Gamestate.switch(loadS)
   end
 end

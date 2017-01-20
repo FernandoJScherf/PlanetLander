@@ -1,24 +1,61 @@
 --PLAY GAMESTATE CALLBACKS:
-
 local ship ; local spaceDust = {} ; local spaceRock = {}
-
 local extSpace = 40--screenWidth/4
-
+local showInfo = false
 local nSpaceRocks
 entities = {}
 
-function play:init()
-  entities[1] = Ship(centerScreenX + 50, centerScreenY + 70,
-         math.random(0, 100), math.random(0, 100), math.random(150, 170))
+sources = {} --Table for sound effects that are being played.
+local sourceShipDest ; local sourceRockExplosion = {}
+--[[global sourcePropulsor ; sourceLaser]]
+
+--LOAD STATE
+------------------------
+function loadS:enter()
+  --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
+  local function sfsToSource(f, volume)
+    local sound = sfxr.newSound()
+    sound:loadBinary(f)
+    sound.volume.sound = volume
+    local soundData = sound:generateSoundData()
+    return love.audio.newSource(soundData)
+  end
+  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.25)
+  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.1)
+  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.3)
+  sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.3)
+  
+
+  --love.audio.setPosition(centerScreenX, centerScreenY, 0)
+  love.audio.setDistanceModel("exponentclamped")
+end
+
+local loaded = false
+function loadS:draw()
+  love.graphics.print("Get Ready!", centerScreenX - 16, centerScreenY - 32)
+  loaded = true
+end
+
+function loadS:keyreleased(key)
+  if loaded then Gamestate.switch(play) end
+end
+
+--PLAY STATE:
+-------------------------------------------------------------
+function play:leave()
+  sourceLaser = nil
+  sourcePropulsor = nil --This one in particular was global
+  --because it also needed to exist in shipClass.lua.
+  --So I destroy it when I don't need it anymore.
+end
+
+function play:enter()
+  entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
+         math.random(0, 100), math.random(0, 100), math.random(150, 170), 
+         sourcePropulsor)
   --entities[1].xSpeed = 25
   entities[1].aSpeed = 0
   entities[1]:rotate(1, math.pi / 2 + 0.2)
-  --ship = entities[1]
-  --[[entities[2] = Ship(centerScreenX + 50, centerScreenY - 100,
-         math.random(0, 100), math.random(0, 100), math.random(150, 170))
-  entities[2].xSpeed = 25
-  entities[2].aSpeed = 0
-  entities[2].freeze = true]]
   
   local nSpaceDusts = math.floor( screenWidth / 4 )
   local limit = nSpaceDusts + #entities
@@ -32,7 +69,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 2
+  nSpaceRocks = 15
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -106,6 +143,32 @@ function insertFullExplotion(xCenter, yCenter, radiusMax, xSpeed, ySpeed)
   end
 end
 
+function insertAndPlaySE(sourceToClone, x, y)
+  --If we have too many sound effects in the source table.
+  --eliminate the oldest one:
+  local maxSounds = 12
+  if #sources >= maxSounds then
+    sources[1]:stop()
+    table.remove(sources, 1)
+  end
+  --Insert clone of source sound effect to table and play it:
+  table.insert(sources, sourceToClone:clone())
+  
+  x = x - centerScreenX
+  y = y - centerScreenY
+  
+  --Divide to attenuate effect of the distance model:
+  sources[#sources]:setPosition(x / 12, y / 12, 0) --Stereo, babe.
+  sources[#sources]:play()
+end
+
+
+local function explosiveSoundRock(ent)
+  sourceRockExplosion:setPitch(math.random(25, 50) / 50)
+  sourceRockExplosion:setVolume(ent.radius / maxRadius)        
+  insertAndPlaySE(sourceRockExplosion, ent.xCenter, ent.yCenter)
+end
+
 local shipCollidedPlanet
 function play:update(dt)
   local i = 1 
@@ -113,7 +176,7 @@ function play:update(dt)
   --CHECK FOR COLLISIONS!!!
   while i <= #entities do
     --ENTITIES AGAINST PLANET: 
-    --Don't check collision for: explotions.
+    --Don't check collision for: explosions.
     if checkColl(entities[i].xCenter, entities[i].yCenter, entities[i].radius,
       centerScreenX, centerScreenY, circleRadius) then
       
@@ -124,6 +187,10 @@ function play:update(dt)
           --Otherwise, it is DESTROYED.
           
           if entities[i].shipSpeed > entities[i].speedMaxLanding then
+
+            insertAndPlaySE(sourceShipDest, entities[i].xCenter, 
+              entities[i].yCenter)
+
             --REMOVE POINTS HERE.
             insertFullExplotion(
                     entities[i].xCenter, 
@@ -154,7 +221,16 @@ function play:update(dt)
         
       --If the entity colliding is not of the type explotion
       --Create an explotion!
-    elseif not entities[i]:is(Explotion) then
+      elseif not entities[i]:is(Explotion) then
+      
+        if entities[i]:is(SpaceRock) then
+          
+          explosiveSoundRock(entities[i])
+        --elseif entities[i]:is(SpaceDust) then
+          --sourceRockExplosion:setVolume(entities[i].radius / (maxRadius + maxRadius))
+          --insertAndPlaySE(sourceRockExplosion)
+        end
+      
       --REMOVES POINTS HERE IF ITS AN SPACE ROCK.
         insertFullExplotion(
                 entities[i].xCenter, 
@@ -163,7 +239,7 @@ function play:update(dt)
                 0, 
                 0)
         table.remove(entities, i)
-        i = i - 1
+        i = i - 1          
         
       elseif entities[i]:is(Explotion) then
         table.remove(entities, i)
@@ -204,7 +280,10 @@ function play:update(dt)
               table.remove(entities, j)
               i = i - 1
             elseif entities[j]:is(Ship) then --Against Ship.
-            --Explotion!
+              --Play Ship's Destruction Sound Effect:
+              insertAndPlaySE(sourceShipDest, entities[j].xCenter, 
+                entities[j].yCenter)
+              --Explotion!
               insertFullExplotion(
                 entities[j].xCenter, 
                 entities[j].yCenter,
@@ -248,6 +327,7 @@ function play:update(dt)
                 end
                   
               end
+              explosiveSoundRock(entities[i])
               --Explotion.
               insertFullExplotion(
                 entities[i].xCenter, 
@@ -269,7 +349,6 @@ function play:update(dt)
   end
    
   i = 1
-  
   while i <= #entities do
     --update current entity:
     entities[i]:update(dt)
@@ -290,7 +369,6 @@ function play:update(dt)
     
     i = i + 1
   end
-
 end
 
 function play:draw()
@@ -318,57 +396,68 @@ function play:draw()
   love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
     circleRadius + margen) 
   love.graphics.setColor(255,255,255)
-    
-  --I NEED INFORMATION MY BOY.
-  local contExplotion = 0
-  local contBullet = 0
-  local contShip = 0
-  local contSpaceRock = 0
-  local contSpaceDust = 0
-  local shipSpeed = 0
-  local speedMaxLanding = 0
-  local state = 0
-  local rotation = 0
-  local angleC = 0
-  local sX = 0
-  local sY = 0
   
-  for i = 1, #entities do
-    if entities[i]:is(Explotion) then
-      contExplotion = contExplotion + 1
-    elseif entities[i]:is(Bullet) then
-      contBullet = contBullet + 1
-    elseif entities[i]:is(Ship) then
-      contShip = contShip + 1
-      shipSpeed = entities[i].shipSpeed
-      speedMaxLanding = entities[i].speedMaxLanding
-      state = entities[i].state
-      angleC = entities[i].angleC
-      sX = entities[i].xCenter
-      sY = entities[i].yCenter
-      rotation = entities[i].rotation
-    elseif entities[i]:is(SpaceRock) then
-      contSpaceRock = contSpaceRock + 1
-    elseif entities[i]:is(SpaceDust) then
-      contSpaceDust = contSpaceDust + 1
+  if showInfo then
+    --I NEED INFORMATION MY BOY.
+    local contExplotion = 0
+    local contBullet = 0
+    local contShip = 0
+    local contSpaceRock = 0
+    local contSpaceDust = 0
+    local shipSpeed = 0
+    local speedMaxLanding = 0
+    local state = 0
+    local rotation = 0
+    local angleC = 0
+    local sX = 0
+    local sY = 0
+    
+    for i = 1, #entities do
+      if entities[i]:is(Explotion) then
+        contExplotion = contExplotion + 1
+      elseif entities[i]:is(Bullet) then
+        contBullet = contBullet + 1
+      elseif entities[i]:is(Ship) then
+        contShip = contShip + 1
+        shipSpeed = entities[i].shipSpeed
+        speedMaxLanding = entities[i].speedMaxLanding
+        state = entities[i].state
+        angleC = entities[i].angleC
+        sX = entities[i].xCenter
+        sY = entities[i].yCenter
+        rotation = entities[i].rotation
+      elseif entities[i]:is(SpaceRock) then
+        contSpaceRock = contSpaceRock + 1
+      elseif entities[i]:is(SpaceDust) then
+        contSpaceDust = contSpaceDust + 1
+      end
     end
+    
+    --Testeststststs prints!
+    love.graphics.print("contSpaceDust: " .. contSpaceDust, 0, 10)
+    love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
+    love.graphics.print("contShip: " .. contShip, 0, 30)
+    love.graphics.print("contBullet: " .. contBullet, 0, 40)
+    love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
+    love.graphics.print("shipSpeed: " .. 
+      (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
+    love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
+    love.graphics.print("shipCollidedPlanet: " .. 
+      tostring(shipCollidedPlanet), 0, 90)
+    
+    love.graphics.print("state: " .. state, sX + 10, sY)
+    love.graphics.print("angleC: " .. angleC, sX + 10, sY + 10)
+    love.graphics.print("rotation: " .. rotation, sX + 10, sY + 20)
+    love.graphics.print(math.abs(rotation - angleC) .. " > " .. 
+      math.pi / 32, sX + 10, sY + 30)
   end
   
-  --Testeststststs prints!
-  love.graphics.print("contSpaceDust: " .. contSpaceDust, 0, 10)
-  love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
-  love.graphics.print("contShip: " .. contShip, 0, 30)
-  love.graphics.print("contBullet: " .. contBullet, 0, 40)
-  love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
-  love.graphics.print("shipSpeed: " .. 
-    (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
-  love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
-  love.graphics.print("shipCollidedPlanet: " .. tostring(shipCollidedPlanet), 0, 90)
-  
-  love.graphics.print("state: " .. state, sX + 10, sY)
-  love.graphics.print("angleC: " .. angleC, sX + 10, sY + 10)
-  love.graphics.print("rotation: " .. rotation, sX + 10, sY + 20)
-  love.graphics.print(math.abs(rotation - angleC) .. " > " .. math.pi / 32  , sX + 10, sY + 30)
-  
   backToScreenAndUpscale()
+  
+end
+
+function play:keypressed(key)
+  if key == "i" then-- and love.keyboard.isDown("i") then
+    showInfo = not showInfo
+  end
 end
