@@ -6,10 +6,47 @@ local nSpaceRocks
 entities = {}
 
 sources = {} --Table for sound effects that are being played.
+local sourceShipDest ; local sourceRockExplosion = {}
+--[[global sourcePropulsor]]
 
-function play:init()
-  entities[1] = Ship(centerScreenX + 50, centerScreenY + 70,
-         math.random(0, 100), math.random(0, 100), math.random(150, 170))
+--LOAD STATE
+------------------------
+function loadS:enter()
+  --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
+  local function sfsToSource(f, volume)
+    local sound = sfxr.newSound()
+    sound:loadBinary(f)
+    sound.volume.sound = volume
+    local soundData = sound:generateSoundData()
+    return love.audio.newSource(soundData)
+  end
+  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.25)
+  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.13)
+  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.2)
+end
+
+local loaded = false
+function loadS:draw()
+  love.graphics.print("Get Ready!", centerScreenX - 16, centerScreenY - 32)
+  loaded = true
+end
+
+function loadS:keyreleased(key)
+  if loaded then Gamestate.switch(play) end
+end
+
+--PLAY STATE:
+-------------------------------------------------------------
+function play:leave()
+  sourcePropulsor = nil --This one in particular was global
+  --because it also needed to exist in shipClass.lua.
+  --So I destroy it when I don't need it anymore.
+end
+
+function play:enter()
+  entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
+         math.random(0, 100), math.random(0, 100), math.random(150, 170), 
+         sourcePropulsor)
   --entities[1].xSpeed = 25
   entities[1].aSpeed = 0
   entities[1]:rotate(1, math.pi / 2 + 0.2)
@@ -26,7 +63,7 @@ function play:init()
     entities[i].ySpeed = math.random( -25, 25) 
   end
   
-  nSpaceRocks = 5
+  nSpaceRocks = 15
   limit = nSpaceRocks + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
@@ -39,19 +76,6 @@ function play:init()
     entities[i].xSpeed = math.random( -6, 6) 
     entities[i].ySpeed = math.random( -6, 6) 
   end
-  
-    --GENERATE THE SOUND EFFECTS:
-  local function sfsToSource(f, volume)
-    local sound = sfxr.newSound()
-    sound:loadBinary(f)
-    sound.volume.sound = volume
-    local soundData = sound:generateSoundData()
-    return love.audio.newSource(soundData)
-  end
-  
-  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.4)
-  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.2)
-  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.2)
   
 end
 
@@ -121,10 +145,16 @@ function insertAndPlaySE(sourceToClone)
     sources[1]:stop()
     table.remove(sources, 1)
   end
-  --Insert clone of source sound effect to table and play it:  
+  --Insert clone of source sound effect to table and play it:
   table.insert(sources, sourceToClone:clone())
   sources[#sources]:play()
-  print(#sources)
+end
+
+
+local function explosiveSoundRock(ent)
+  sourceRockExplosion:setPitch(math.random(25, 50) / 50)
+  sourceRockExplosion:setVolume(ent.radius / maxRadius)        
+  insertAndPlaySE(sourceRockExplosion)
 end
 
 local shipCollidedPlanet
@@ -180,13 +210,13 @@ function play:update(dt)
       --Create an explotion!
       elseif not entities[i]:is(Explotion) then
       
-        --if entities[i]:is(SpaceRock) then
-          sourceRockExplosion:setVolume(entities[i].radius / maxRadius)
-          insertAndPlaySE(sourceRockExplosion)
+        if entities[i]:is(SpaceRock) then
+          
+          explosiveSoundRock(entities[i])
         --elseif entities[i]:is(SpaceDust) then
           --sourceRockExplosion:setVolume(entities[i].radius / (maxRadius + maxRadius))
           --insertAndPlaySE(sourceRockExplosion)
-        --end
+        end
       
       --REMOVES POINTS HERE IF ITS AN SPACE ROCK.
         insertFullExplotion(
@@ -238,7 +268,7 @@ function play:update(dt)
               i = i - 1
             elseif entities[j]:is(Ship) then --Against Ship.
               --Play Ship's Destruction Sound Effect:
-              sourceShipDest:play()
+              insertAndPlaySE(sourceShipDest)
               --Explotion!
               insertFullExplotion(
                 entities[j].xCenter, 
@@ -283,6 +313,7 @@ function play:update(dt)
                 end
                   
               end
+              explosiveSoundRock(entities[i])
               --Explotion.
               insertFullExplotion(
                 entities[i].xCenter, 

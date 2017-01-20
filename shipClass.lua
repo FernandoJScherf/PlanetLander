@@ -10,7 +10,7 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
-  
+
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
                        4 ,  2 ,

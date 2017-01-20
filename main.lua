@@ -34,6 +34,7 @@ function love.load()
   menu = {} --Menu gamestate
   play = {} --Game gamestate
   score = {} --High Score gamestate
+  loadS = {} --Load gamestate. To generate the sound effects, which takes its time.
   
   Object = require "classic"
   Gamestate = require "gamestate"
