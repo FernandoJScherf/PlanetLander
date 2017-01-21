@@ -19,9 +19,6 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   self.red = red
   self.green = green
   self.blue = blue
-  
-  self.freeze = false --If this is true, the object doesn't move at all.
-  --It stop being affected by gravity, translated and rotated.
 end
 
 function Polygon:rotate(dt, angleSpeedOfRotation)
@@ -45,7 +42,7 @@ function Polygon:rotate(dt, angleSpeedOfRotation)
 end
 
 function Polygon:update(dt)
-  if not self.freeze then
+ 
     --Gravity:
     Polygon.super.update(self, dt)
     
@@ -58,7 +55,7 @@ function Polygon:update(dt)
     --Rotation of vertices:
     self:rotate(dt, self.aSpeed)
     
-  end
+ 
 end
 
 function Polygon:draw()

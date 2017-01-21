@@ -20,14 +20,14 @@ function backToScreenAndUpscale()
     love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
 end
 
-  circleRadius = 24
+  
   upscalingFactor = 1
   screenWidth = 512--256*2--256 
   centerScreenX = screenWidth / 2
   screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2
   fillOrLine = "fill" --For the polygons and circles and stuff.
-  maxRadius = 30 --Maximum radius for Space Rocks.
+  
 
 --LOVE CALLBACKS:
 function love.load()
