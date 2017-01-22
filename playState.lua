@@ -1,19 +1,19 @@
 --PLAY GAMESTATE CALLBACKS:
-local ship ; local spaceDust = {} ; local spaceRock = {}
 local extSpace = 40--screenWidth/4
 local showInfo = false
-local circleColor = {116, 116, 232}
+local circleColor = {116, 116, 116}
 circleRadius = 24
+local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
-local planet = 1
+local planet = 1 --Represent levels.
 maxRadius = 30 --Maximum radius for Space Rocks.
 entities = {}
 
 local loaded = false --If sound files finished loading.
 
-local waves = 1--Waves of asteroids per level.
-local wavesCont = 0 --Wave counter.
+local waves--Waves of asteroids per level.
+local wavesCont = 1 --Wave counter.
 
 local timeWaves = 30 --Time between waves of asteroids.
 local timeWavesCont = 0 --Time counter.
@@ -24,6 +24,20 @@ local sourceShipDest ; local sourceRockExplosion = {}
 
 --LOAD STATE
 ---------------------------------------------------------------
+local function placeNewDust()
+  local nSpaceDusts = math.floor( screenWidth / 4 )
+  local limit = nSpaceDusts + #entities
+  for i = 1 + #entities, limit  do
+    local color = math.random(80, 240)
+    entities[i] = SpaceDust(math.random(-extSpace, screenWidth + extSpace),
+                  math.random(-extSpace, screenHeight + extSpace), color - 50,
+                  color - 50, color + 10)
+    
+    entities[i].xSpeed = math.random( -25, 25) 
+    entities[i].ySpeed = math.random( -25, 25) 
+  end
+end
+
 function loadS:init()
   --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
   local function sfsToSource(f, volume)
@@ -50,6 +64,7 @@ function loadS:enter()
       circleColor[2] + circleColorVar, circleColor[3] + circleColorVar)
     entities[1]:rotate(1, -math.pi / 2 )
     entities[1].aSpeed = 0
+    placeNewDust()
 end
 
 function loadS:update(dt)
@@ -116,14 +131,14 @@ local function placeNewRocks(quantity, radius)
   end
 end
 
-function play:leave()
+--[[function play:leave()
   sourceLaser = nil
   sourcePropulsor = nil --This one in particular was global
   --because it also needed to exist in shipClass.lua.
   --So I destroy it when I don't need it anymore.
   maxRadius = nil --Also needed to exist in spaceRock. Not anymore.
   circleRadius = nil
-end
+end]]
 
 function play:enter()
   entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
@@ -132,7 +147,7 @@ function play:enter()
   entities[1].aSpeed = 0
   entities[1]:rotate(1, math.pi / 2 + 0.2)
   
-  local nSpaceDusts = math.floor( screenWidth / 4 )
+  --[[local nSpaceDusts = math.floor( screenWidth / 4 )
   local limit = nSpaceDusts + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(80, 240)
@@ -142,9 +157,27 @@ function play:enter()
     
     entities[i].xSpeed = math.random( -25, 25) 
     entities[i].ySpeed = math.random( -25, 25) 
-  end
+  end]]
+  placeNewDust()
   
-  placeNewRocks(planet, 10)  --INITIAL ASTEROIDS.
+  --By the way, a "planet" is a "level".
+  placeNewRocks(planet, 10)  --Asteroids at the biggining of planet.
+  --Number of waves of asteroids depends on the number of planet.
+  --waves = math.floor( ((planet - 1) / 2) + 2 )
+  local logPlanet = math.log10(planet)
+  waves = math.floor(logPlanet * 4 + 2)
+  --Times between waves of asteroids depends on the number of planet:
+  timeWaves = logPlanet * 16 + 18
+  --Every level, the color of the planet should be different:
+  local pos = planet + 2
+  local shouldbethreeanyway = #circleColor
+  while pos > shouldbethreeanyway do
+    pos = pos - #circleColor
+  end
+  circleColor[pos] = circleColor[pos] * (planet + 1)
+  while circleColor[pos] > 255 do
+    circleColor[pos] = circleColor[pos] - 255
+  end
   
 end
 
@@ -234,6 +267,7 @@ end
 
 --PLAY:UPDATE--------------------------------
 local shipCollidedPlanet
+local waitTime = 0
 function play:update(dt)
   local i = 1 
   shipCollidedPlanet = false
@@ -441,21 +475,45 @@ function play:update(dt)
   circleColorVar = math.sin(circleColorTime) * 10
   circleColorTime = circleColorTime + dt
   
+  
+  contSpaceRock = 0
+  for i = 1, #entities do
+    if entities[i]:is(SpaceRock) then contSpaceRock = contSpaceRock + 1 end
+  end
   --If the final wave of asteroids hasn't been reached:
-  if wavesCont <= waves then
+  if wavesCont < waves then
     --If all asteroids were eliminated or the time for next wave is up:
-    local contSpaceRock = 0
-    for i = 1, #entities do
-      if entities[i]:is(SpaceRock) then contSpaceRock = contSpaceRock + 1 end
-    end
     if contSpaceRock == 0 or timeWavesCont >= timeWaves then
       placeNewRocks(planet, 10)
       timeWavesCont = 0
       wavesCont = wavesCont + 1 --Next wave.
     end
     timeWavesCont = timeWavesCont + dt
-  else
-    waveCont = 0
+  --If we reached the final wave and there are no asteroids left:
+  elseif contSpaceRock == 0 then 
+    for i = 1, #entities do
+      entities[i].beUpdated = false --Everything will stop moving
+    end
+    --Get the table empty to use in next gamestate.
+    --Also, lets make it pretty!
+    local entMax = #entities
+    if entMax >= 1 then
+      --Every 0.01 of a second, destroy an object.
+      if waitTime >= 0.01 then
+        insertAndPlaySE(sourcePropulsor, entities[entMax].xCenter,
+          entities[entMax].yCenter)
+        entities[entMax] = nil 
+        waitTime = 0
+        
+      else
+        waitTime = waitTime + dt
+      end
+    else
+      wavesCont = 1             --Reset values for next planet.
+      timeWavesCont = 0         --Reset values for next planet.
+      planet = planet + 1       --Add 1 to planet.
+      Gamestate.switch(loadS)   --To Get ready screen and next planet.
+    end
   end
 end
 
@@ -498,7 +556,6 @@ function play:draw()
     local contExplotion = 0
     local contBullet = 0
     local contShip = 0
-    local contSpaceRock = 0
     local contSpaceDust = 0
     local shipSpeed = 0
     local speedMaxLanding = 0
@@ -522,8 +579,6 @@ function play:draw()
         sX = entities[i].xCenter
         sY = entities[i].yCenter
         rotation = entities[i].rotation
-      elseif entities[i]:is(SpaceRock) then
-        contSpaceRock = contSpaceRock + 1
       elseif entities[i]:is(SpaceDust) then
         contSpaceDust = contSpaceDust + 1
       end

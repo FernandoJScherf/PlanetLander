@@ -19,6 +19,8 @@ function Polygon:new(xCenter, yCenter, vertices, red, green, blue)
   self.red = red
   self.green = green
   self.blue = blue
+  
+  self.beUpdated = true
 end
 
 function Polygon:rotate(dt, angleSpeedOfRotation)
@@ -42,6 +44,7 @@ function Polygon:rotate(dt, angleSpeedOfRotation)
 end
 
 function Polygon:update(dt)
+  if self.beUpdated then
  
     --Gravity:
     Polygon.super.update(self, dt)
@@ -55,7 +58,7 @@ function Polygon:update(dt)
     --Rotation of vertices:
     self:rotate(dt, self.aSpeed)
     
- 
+  end 
 end
 
 function Polygon:draw()
