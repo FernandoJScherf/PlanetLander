@@ -19,12 +19,12 @@ function Point:update(dt)
     local Yi = self.yCenter
     local Px = centerScreenX
     local Py = centerScreenY
-    local M = 100000--100000      --Mass of the planet.
+    --local M = 100000--100000      --Mass of the planet.
     
     --1)
     local g = 0
     if self.gravAffected then
-      g = M / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
+      g = planetMass / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
     end 
     
     --angle =  math.atan((Yi - Py) / (Xi - Px)) --modulo?

@@ -2,7 +2,8 @@
 local extSpace = 40--screenWidth/4
 local showInfo = false
 local circleColor = {116, 116, 116}
-circleRadius = 24
+circleRadius = 20
+planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
@@ -52,7 +53,7 @@ function loadS:init()
   sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.3)
   sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.3)
   sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.3)
-  
+  sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.3)
 
   --love.audio.setPosition(centerScreenX, centerScreenY, 0)
   love.audio.setDistanceModel("exponentclamped")
@@ -147,19 +148,10 @@ function play:enter()
   entities[1].aSpeed = 0
   entities[1]:rotate(1, math.pi / 2 + 0.2)
   
-  --[[local nSpaceDusts = math.floor( screenWidth / 4 )
-  local limit = nSpaceDusts + #entities
-  for i = 1 + #entities, limit  do
-    local color = math.random(80, 240)
-    entities[i] = SpaceDust(math.random(-extSpace, screenWidth + extSpace),
-                  math.random(-extSpace, screenHeight + extSpace), color - 50,
-                  color - 50, color + 10)
-    
-    entities[i].xSpeed = math.random( -25, 25) 
-    entities[i].ySpeed = math.random( -25, 25) 
-  end]]
+  --Insert Space Dust:
   placeNewDust()
   
+  --Calculate Difficulty of the current planet:
   --By the way, a "planet" is a "level".
   placeNewRocks(planet, 10)  --Asteroids at the biggining of planet.
   --Number of waves of asteroids depends on the number of planet.
@@ -168,6 +160,7 @@ function play:enter()
   waves = math.floor(logPlanet * 4 + 2)
   --Times between waves of asteroids depends on the number of planet:
   timeWaves = logPlanet * 16 + 18
+  
   --Every level, the color of the planet should be different:
   local pos = planet + 2
   local shouldbethreeanyway = #circleColor
@@ -178,7 +171,11 @@ function play:enter()
   while circleColor[pos] > 255 do
     circleColor[pos] = circleColor[pos] - 255
   end
-  
+  --And the mass and radius:
+  circleRadius = math.random(10, 30)
+  --The mass is proportional to the radius:
+  planetMass = circleRadius * 4000  
+  print(circleRadius .. " " .. planetMass)
 end
 
 function checkColl(x1, y1, r1, x2, y2, r2)
@@ -500,7 +497,8 @@ function play:update(dt)
     if entMax >= 1 then
       --Every 0.01 of a second, destroy an object.
       if waitTime >= 0.01 then
-        insertAndPlaySE(sourcePropulsor, entities[entMax].xCenter,
+        sourceElimination:setPitch(math.random(25, 50) / 50)
+        insertAndPlaySE(sourceElimination, entities[entMax].xCenter,
           entities[entMax].yCenter)
         entities[entMax] = nil 
         waitTime = 0

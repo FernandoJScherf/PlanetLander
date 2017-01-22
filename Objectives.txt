@@ -3,8 +3,10 @@
 18: Work on sound.											DONE.
 19: Work on sound.											DONE.
 20: Add Scores, increasing difficulty, levels, etc.
-21: Add Scores, increasing difficulty, levels, METALS, etc.
-22: Add Scores, increasing difficulty, levels, METALS, etc.
+21: Add Scores, increasing difficulty, levels, etc.
+22: Add Scores, increasing difficulty, levels, etc.	
++Make asteroids appear only on externa sides.
++Add metals at random when an asteroid is destroyed
 23: Work on menu and HighScore Table 
 24: Work on menu and HighScore Table
 25: Add safe practice levels (How to move and shoot, how to land)
