@@ -13,9 +13,9 @@ Vector Graphics are fun.
 The idea is to finish this game and submit it to the Finally Finish Something Game Jam.
 https://itch.io/jam/finally-finish-something
 
-Font m5x7: Daniel Linssen (managore.itch.io)
-
 Attributions:
+
+Font m5x7: Daniel Linssen (managore.itch.io)
 
 hump - Helper Utilities for a Multitude of Problems: Matthias Richter (https://github.com/vrld)
 

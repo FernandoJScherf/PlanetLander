@@ -6,7 +6,7 @@
 21: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
 22: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
 23: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
-+Make asteroids appear only on external sides.					done!!!
++Make asteroids appear only on external sides.		done!!!done!!!done!!!done!!!done!!!
 +Add metals at random when an asteroid is destroyed .
 24: Work on menu and HighScore Table.
 25: Work on menu and HighScore Table.
