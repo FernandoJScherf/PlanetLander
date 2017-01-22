@@ -7,7 +7,7 @@ planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
-local planet = 1 --Represent levels.
+local planet = 10 --Represent levels.
 maxRadius = 30 --Maximum radius for Space Rocks.
 entities = {}
 
@@ -117,18 +117,73 @@ end
 
 --PLAY STATE:
 ---------------------------------------------------------------
+function checkColl(x1, y1, r1, x2, y2, r2)
+  local entity = entities[i]
+  local dX = math.abs(x2 - x1)
+  local dY = math.abs(y2 - y1)
+  local dRadius = (r1 + r2)
+  if dRadius >= dX and dRadius >= dY then
+    return true
+  else
+    return false
+  end 
+end
+
 local function placeNewRocks(quantity, radius)
   limit = quantity + #entities
   for i = 1 + #entities, limit  do
     local color = math.random(30, 220)
-    local x ; local y
     
-    entities[i] = SpaceRock(math.random(-extSpace, screenWidth + extSpace),
-                  math.random(-extSpace, screenWidth + extSpace),
-                  color + 30, color, color, radius)
+    --There are 4 sectors, all of them out of the screen, where
+    local sector = math.random(1,4) --an asteroid can appear.
+    local x ; local y ; local xS ; local yS
+    local searchingPosition = true
+    
+    while searchingPosition do
+      if sector == 1 then
+        x = math.random(-extSpace, 0)
+        y = math.random(0, screenHeight)
+        --Give it an inicial speed, going (more or less) towards planet:
+        xS = math.random(0, 10)
+        yS = math.random(-5, 5)
+      elseif sector == 2 then
+        x = math.random(0, screenWidth)
+        y = math.random(-extSpace, 0)
+        
+        xS = math.random(-5, 5)
+        yS = math.random(0, 10)
+      elseif sector == 3 then
+        x = math.random(screenWidth, screenWidth + extSpace)
+        y = math.random(0, screenHeight)
+        
+        xS = math.random(-10, 0)
+        yS = math.random(-5, 5)
+      else
+        x = math.random(0, screenWidth)
+        y = math.random(screenHeight, screenHeight + extSpace)
+        
+        xS = math.random(-5, 5)
+        yS = math.random(-10, 0)
+      end
+      
+      --Check if we are not placing a new rock on top of another one:
+      for i = 1, #entities do
+        if entities[i]:is(SpaceRock) and
+          checkColl(x, y, maxRadius, 
+            entities[i].xCenter, 
+              entities[i].yCenter, 
+                entities[i].radius) then
+          searchingPosition = true
+          break
+        end
+        searchingPosition = false
+      end
+    end
+    
+    entities[i] = SpaceRock(x, y, color + 30, color, color, radius)
                 
-    entities[i].xSpeed = math.random( -6, 6) 
-    entities[i].ySpeed = math.random( -6, 6) 
+    entities[i].xSpeed = xS
+    entities[i].ySpeed = yS
   end
 end
 
@@ -178,17 +233,6 @@ function play:enter()
   print(circleRadius .. " " .. planetMass)
 end
 
-function checkColl(x1, y1, r1, x2, y2, r2)
-  local entity = entities[i]
-  local dX = math.abs(x2 - x1)
-  local dY = math.abs(y2 - y1)
-  local dRadius = (r1 + r2)
-  if dRadius >= dX and dRadius >= dY then
-    return true
-  else
-    return false
-  end 
-end
 
 function elastic(ent1, ent2)
   local xV1 = ent1.xSpeed; local yV1 = ent1.ySpeed
@@ -324,9 +368,7 @@ function play:update(dt)
         if entities[i]:is(SpaceRock) then
           
           explosiveSoundRock(entities[i])
-        --elseif entities[i]:is(SpaceDust) then
-          --sourceRockExplosion:setVolume(entities[i].radius / (maxRadius + maxRadius))
-          --insertAndPlaySE(sourceRockExplosion)
+
         end
       
       --REMOVES POINTS HERE IF ITS AN SPACE ROCK.
