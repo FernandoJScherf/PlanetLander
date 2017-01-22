@@ -1,13 +1,15 @@
-16: Finish landing implementation.	DONE
-17: Finish landing implementation.	DONE. START WORKING ON SOUND.
-18: Work on sound.
-19: Work on sound.
-20: Add Scores, increasing difficulty, levels, etc.
-21: Add Scores, increasing difficulty, levels, etc.
-22: Finish adding scores, levels, etc.
-23: Work on menu and HighScore Table 
-24: Work on menu and HighScore Table
-25: Add safe practice levels (How to move and shoot, how to land)
+16: Finish landing implementation.									DONE.
+17: Finish landing implementation.									DONE. START WORKING ON SOUND.
+18: Work on sound.											DONE.
+19: Work on sound.											DONE.
+20: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
+21: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
+22: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
+23: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
++Make asteroids appear only on external sides.		done!!!done!!!done!!!done!!!done!!!
++Add metals at random when an asteroid is destroyed .
+24: Work on menu and HighScore Table.
+25: Work on menu and HighScore Table.
 26: Add safe practice levels (How to move and shoot, how to land)
 27: (Happy Birthday 24!) Add safe practice levels (How to move and shoot, how to land)
 28: Make manual and Itch.io page.

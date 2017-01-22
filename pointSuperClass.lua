@@ -9,6 +9,8 @@ function Point:new(xCenter, yCenter)
   
   self.xSpeed = 0 -- pps pixel per second
   self.ySpeed = 0 -- pps pixel per second
+  
+  self.gravAffected = true
 end
 
 function Point:update(dt)
@@ -17,10 +19,13 @@ function Point:update(dt)
     local Yi = self.yCenter
     local Px = centerScreenX
     local Py = centerScreenY
-    local M = 100000--100000      --Mass of the planet.
+    --local M = 100000--100000      --Mass of the planet.
     
     --1)
-    local g = M / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
+    local g = 0
+    if self.gravAffected then
+      g = planetMass / ((Xi - Px) ^ 2 + (Yi - Py) ^ 2)
+    end 
     
     --angle =  math.atan((Yi - Py) / (Xi - Px)) --modulo?
     local angle = math.atan2((Py - Yi), (Px - Xi))

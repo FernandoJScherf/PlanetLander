@@ -110,7 +110,7 @@ function Ship:update(dt)
      
     self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
   end
-  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.5 then
+  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.25 then
     if self.state == 1 then
       self:accel(-3, dt)  -- Every shot makes the ship go slower.
     end
@@ -130,7 +130,7 @@ function Ship:update(dt)
     ent:rotate(1, angle) --Rotate vertices of BULLET depending on ship angle when it shoots.
 
     --Give velocity to bullet:
-    local v  = 200 --pixels per second.
+    local v  = 300 --pixels per second.
     angle = angle + piDiv2
     ent.xSpeed = v*math.cos(angle) + self.xSpeed
     ent.ySpeed = v*math.sin(angle) + self.ySpeed
