@@ -7,7 +7,7 @@ planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
-local planet = 10 --Represent levels.
+local planet = 1 --Represent levels.
 maxRadius = 30 --Maximum radius for Space Rocks.
 entities = {}
 
@@ -180,6 +180,7 @@ local function placeNewRocks(quantity, radius)
       end
     end
     
+    radius = radius * (1 + math.random() / 12)
     entities[i] = SpaceRock(x, y, color + 30, color, color, radius)
                 
     entities[i].xSpeed = xS
@@ -208,7 +209,7 @@ function play:enter()
   
   --Calculate Difficulty of the current planet:
   --By the way, a "planet" is a "level".
-  placeNewRocks(planet, 10)  --Asteroids at the biggining of planet.
+  placeNewRocks(planet, 9)  --Asteroids at the biggining of planet.
   --Number of waves of asteroids depends on the number of planet.
   --waves = math.floor( ((planet - 1) / 2) + 2 )
   local logPlanet = math.log10(planet)
@@ -262,8 +263,7 @@ function insertFullExplotion(xCenter, yCenter, radiusMax, xSpeed, ySpeed)
   if radiusMax > 4 then --Only when the object colliding is big enough.
     local pi = math.pi
     local increments = pi / 4 --Max is 2*pi, these are 8 increments
-    for amp = 1, radiusMax * 2
-    , 2 do
+    for amp = 1, radiusMax * 2, 2 do
       for angle = 0, pi * 2, increments do
         local random = math.random()
         local x = math.cos(angle + random) * amp
@@ -420,18 +420,24 @@ function play:update(dt)
               table.remove(entities, j)
               i = i - 1
             elseif entities[j]:is(Ship) then --Against Ship.
-              --Play Ship's Destruction Sound Effect:
-              insertAndPlaySE(sourceShipDest, entities[j].xCenter, 
-                entities[j].yCenter)
-              --Explotion!
-              insertFullExplotion(
-                entities[j].xCenter, 
-                entities[j].yCenter,
-                entities[j].radius + 5,
-                entities[i].xSpeed, --In this case, the collision is completely
-                entities[i].ySpeed) --Inelastic :D
-              
-              table.remove(entities, j)
+              if entities[i]:is(SpaceMetal) then
+                insertAndPlaySE(sourceElimination, 
+                  entities[i].xCenter, entities[i].yCenter)
+                table.remove(entities, i)
+              else
+                --Play Ship's Destruction Sound Effect:
+                insertAndPlaySE(sourceShipDest, entities[j].xCenter, 
+                  entities[j].yCenter)
+                --Explotion!
+                insertFullExplotion(
+                  entities[j].xCenter, 
+                  entities[j].yCenter,
+                  entities[j].radius + 5,
+                  entities[i].xSpeed, --In this case, the collision is completely
+                  entities[i].ySpeed) --Inelastic :D
+                
+                table.remove(entities, j)
+              end
               i = i - 1
             elseif entities[j]:is(Bullet) then --Against Bullet.
               local xSpeedI ; local ySpeedI
@@ -439,31 +445,76 @@ function play:update(dt)
               --ELASTIC COLLISION MAN!!!!
               xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
               elastic(entities[i], entities[j])
+              --The rocks should never be too small:
               if entities[i].radius >= 4 then 
-              --The rocks should never be too small.   
-                local radius = entities[i].radius
-                local sqrt2 = math.sqrt(2)
-                local newRadius = radius/sqrt2 --So the new radius of the 
-                --new two rocks left after the collision makes them have
-                --half the area of the original rock.
-
-                local angle = math.atan2(ySpeedI, xSpeedI) - math.pi / 2
-                for k = 1, 2 do
-                  local p1X = radius * math.cos(angle)
-                  local p1Y = radius * math.sin(angle)
-
-                  table.insert(entities, 
-                  SpaceRock(entities[i].xCenter + p1X,
-                            entities[i].yCenter + p1Y,
-                            entities[i].red,
-                            entities[i].green,
-                            entities[i].blue,
-                            newRadius))
+                
+                local pi = math.pi
+                local radius = entities[i].radius --of rock
+                local xCenter = entities[i].xCenter
+                local yCenter = entities[i].yCenter
+                
+                if math.random(1, 4) == 1 then --1/4 chance.
+                  --Insert SpaceMetal:
+                  local k = #entities --save top table place at this point.
+                  local radiusExpan = radius * 3 --Radius of the asteroid, but bigger.
+                  
+                  --The quantity of the metals depends on the radius of the rock.
+                  --The sum of the areas of all the metals must be
+                  --equal to the area of the original space rock:
+                  --(The radius of the little metals is 2. 2 ^ 2 = 4
+                  local nSpaceMetals = math.ceil((radius ^ 2) / 4)
+                  local i = 1
+                  while i <= nSpaceMetals do
+                    
+                    local angle = math.random() * 2 * pi
+                    local rad = math.random() * radiusExpan
+                    local x = math.cos(angle) * rad + xCenter
+                    local y = math.sin(angle) * rad + yCenter
+                    --Check if we are not about to place a metal on top of
+                    --other metal:
+                    local resultColl = false
+                    for o = k + 1, #entities do
+                      resultColl = checkColl(x, y, 2, 
+                        entities[o].xCenter, entities[o].yCenter, entities[o].radius)
+                      if resultColl then break end
+                    end
+                    if resultColl == false then
+                      table.insert(entities, SpaceMetal(x, y, 2)) --Insert to table 
+                        --in the possition that we now know is correct.
                         
-                  --RESULTS OF THE ELASTIC COLLISION
-                  entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
-                  entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
-                  angle = angle + math.pi
+                      --RESULTS OF THE ELASTIC COLLISION
+                      entities[#entities].xSpeed = xSpeedI/2 + math.random(-2,2)
+                      entities[#entities].ySpeed = ySpeedI/2 + math.random(-2,2)
+                        
+                      i = i + 1 --advance to next spacemetal.
+                    end
+                  end
+                  
+                else
+                  --Insert two smaller SpaceRocks:
+                  local sqrt2 = math.sqrt(2)
+                  local newRadius = radius/sqrt2 --So the new radius of the 
+                  --new two rocks left after the collision makes them have
+                  --half the area of the original rock.
+
+                  local angle = math.atan2(ySpeedI, xSpeedI) - math.pi / 2
+                  for k = 1, 2 do
+                    local p1X = radius * math.cos(angle)
+                    local p1Y = radius * math.sin(angle)
+
+                    table.insert(entities, 
+                      SpaceRock(entities[i].xCenter + p1X,
+                              entities[i].yCenter + p1Y,
+                              entities[i].red,
+                              entities[i].green,
+                              entities[i].blue,
+                              newRadius))
+                          
+                    --RESULTS OF THE ELASTIC COLLISION
+                    entities[#entities].xSpeed = xSpeedI + math.random(-2,2)
+                    entities[#entities].ySpeed = ySpeedI + math.random(-2,2)
+                    angle = angle + math.pi
+                  end
                 end
                   
               end
@@ -517,13 +568,15 @@ function play:update(dt)
   
   contSpaceRock = 0
   for i = 1, #entities do
-    if entities[i]:is(SpaceRock) then contSpaceRock = contSpaceRock + 1 end
+    if entities[i]:is(SpaceRock) and not entities[i]:is(SpaceMetal) then
+      contSpaceRock = contSpaceRock + 1 
+    end
   end
   --If the final wave of asteroids hasn't been reached:
   if wavesCont < waves then
     --If all asteroids were eliminated or the time for next wave is up:
     if contSpaceRock == 0 or timeWavesCont >= timeWaves then
-      placeNewRocks(planet, 10)
+      placeNewRocks(planet, 9)
       timeWavesCont = 0
       wavesCont = wavesCont + 1 --Next wave.
     end
@@ -591,7 +644,23 @@ function play:draw()
     circleRadius + margen) 
   love.graphics.setColor(255,255,255)
   
-  if showInfo then
+  if not showInfo then
+    local ship
+    for i = 1, #entities do
+      if entities[i]:is(Ship) then 
+        ship = entities[i]
+        break
+      end
+      ship = nil
+    end
+    if ship then
+      --Make it more red the closer it gets to energy 0.
+      local coloredText = {{255, 155 + ship.energy, 155 + ship.energy},
+        ship.energy .. " / " .. ship.energyMax}
+      love.graphics.print(coloredText, 
+        ship.xCenter + ship.radius, ship.yCenter)
+    end
+  else
     --I NEED INFORMATION MY BOY.
     local contExplotion = 0
     local contBullet = 0

@@ -10,6 +10,10 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
+  
+  --OF GUI:
+  self.energyMax = 1000
+  self.energy = self.energyMax
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -22,7 +26,7 @@ end
 
 --The variable that controls when the propulsors create new SpaceDust:
 local time = 0
-function propulDust(x, y, angle, xSpeedObject, ySpeedObject)
+function Ship:propulDust(x, y, angle, xSpeedObject, ySpeedObject)
   --To add some delay:
   if time > 0.12 then 
     local random = math.random(0, 100)
@@ -38,6 +42,11 @@ function propulDust(x, y, angle, xSpeedObject, ySpeedObject)
     ent.ySpeed = v*math.sin(angle) + ySpeedObject
     
     time = 0
+    
+    --Energy was used:
+    if self.energy > 0 then
+      self.energy = self.energy - 1
+    end
     
   end
 end
@@ -61,11 +70,11 @@ function Ship:accel(accel, dt)
   local angleDis = angle + math.pi
 
   local saveTime = time
-  propulDust(self.vertices[7], self.vertices[8], 
+  self:propulDust(self.vertices[7], self.vertices[8], 
     angleDis, self.xSpeed, self.ySpeed)
   time = saveTime
   --So both propulsors create the same amount of space dust at the same time!
-  propulDust(self.vertices[11], self.vertices[12], 
+  self:propulDust(self.vertices[11], self.vertices[12], 
     angleDis, self.xSpeed, self.ySpeed)
 
   self.xSpeed = self.xSpeed + xSpeedAdded
@@ -96,13 +105,13 @@ function Ship:update(dt)
   local waitTime = 0.07
   if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed + acceleration * dt
-    propulDust(self.vertices[11], self.vertices[12], 
+    self:propulDust(self.vertices[11], self.vertices[12], 
       self.rotation + piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end
   if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
     self.aSpeed = self.aSpeed - acceleration * dt
-    propulDust(self.vertices[7], self.vertices[8], 
+    self:propulDust(self.vertices[7], self.vertices[8], 
       self.rotation - piDiv2, self.xSpeed, self.ySpeed)
     --Dust will be out of one of the vertices of the ship. (That is rotating)
   end

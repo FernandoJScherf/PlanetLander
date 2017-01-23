@@ -49,6 +49,7 @@ function love.load()
   require "bulletClass"
   require "explotionClass"
   sfxr = require("sfxr")
+  require "spaceMetalClass"
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")
