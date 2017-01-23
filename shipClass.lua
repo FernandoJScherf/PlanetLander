@@ -10,10 +10,14 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
+
   
   --OF GUI:
   self.energyMax = 1000
   self.energy = self.energyMax
+  self.metalsMax = 20
+  self.metals = 0
+  self.extraShips = 0
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -22,6 +26,13 @@ function Ship:new(xCenter, yCenter, red, green, blue)
                        0 , -2 ,
                       -4 , -6 }
   Ship.super.new(self, xCenter, yCenter, vertices, red, green, blue)
+end
+
+function Ship:collectMetal()
+  if self.metals < self.metalsMax then
+    self.metals = self.metals + 1
+    insertAndPlaySE(sourceElimination, self.xCenter, self.yCenter)
+  end
 end
 
 --The variable that controls when the propulsors create new SpaceDust:

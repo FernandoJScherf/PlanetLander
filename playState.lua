@@ -7,7 +7,8 @@ planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
-local planet = 1 --Represent levels.
+local planet = 7 --Represent levels.
+local planetPop --Planet's Population.
 maxRadius = 30 --Maximum radius for Space Rocks.
 entities = {}
 
@@ -22,6 +23,11 @@ local timeWavesCont = 0 --Time counter.
 sources = {} --Table for sound effects that are being played.
 local sourceShipDest ; local sourceRockExplosion = {}
 --[[global sourcePropulsor ; sourceLaser]]
+
+  local function percentage(a, b)
+    a = a / b * 100
+    return a
+  end
 
 --LOAD STATE
 ---------------------------------------------------------------
@@ -66,6 +72,9 @@ function loadS:enter()
     entities[1]:rotate(1, -math.pi / 2 )
     entities[1].aSpeed = 0
     placeNewDust()
+    
+    --Calculate Planet Population, proportional to level, with some random addition:
+    planetPop = math.ceil((2001 * planet) * (1 + math.random() / 4))
 end
 
 function loadS:update(dt)
@@ -88,8 +97,10 @@ function loadS:draw()
   love.graphics.setColor(circleColor[1] + circleColorVar,
     circleColor[2] + circleColorVar, circleColor[3] + circleColorVar)
   
-  love.graphics.printf("Get Ready for planet " .. planet .. " !",
-    0, centerScreenY * 0.75, screenWidth, "center")
+  love.graphics.printf("Get Ready for Planet " .. planet .. " !",
+    0, centerScreenY - 35, screenWidth, "center")
+  love.graphics.printf("Population: " .. planetPop .. " Happy Alien Families.",
+    0, centerScreenY - 20, screenWidth, "center")
   
   love.graphics.setColor(255, 255, 255)
   loaded = true
@@ -231,7 +242,7 @@ function play:enter()
   circleRadius = math.random(10, 30)
   --The mass is proportional to the radius:
   planetMass = circleRadius * 4000  
-  print(circleRadius .. " " .. planetMass)
+  --print(circleRadius .. " " .. planetMass)
 end
 
 
@@ -306,6 +317,16 @@ local function explosiveSoundRock(ent)
   insertAndPlaySE(sourceRockExplosion, ent.xCenter, ent.yCenter)
 end
 
+local function xenocide(howMany)
+  if planetPop > 0 then
+    howMany = howMany * (1 + math.random() / 4)--howmany + howMany * math.random() / 4
+    if planetPop > howMany then
+      planetPop = planetPop - howMany
+    else
+      planetPop = 0
+    end
+  end
+end
 --PLAY:UPDATE--------------------------------
 local shipCollidedPlanet
 local waitTime = 0
@@ -330,7 +351,9 @@ function play:update(dt)
             insertAndPlaySE(sourceShipDest, entities[i].xCenter, 
               entities[i].yCenter)
 
-            --REMOVE POINTS HERE.
+            --REMOVE POINTS HERE:
+            xenocide(312) --You killed some aliens during the crashing.
+            
             insertFullExplotion(
                     entities[i].xCenter, 
                     entities[i].yCenter,
@@ -351,7 +374,9 @@ function play:update(dt)
         sourceLaserVPlanet:setPitch(math.random(25, 50) / 50)
         insertAndPlaySE(sourceLaserVPlanet, entities[i].xCenter,
           entities[i].yCenter)
-      --REMOVE POINTS HERE.
+      --REMOVE POINTS HERE:
+        xenocide(144) --You killed some aliens hooting at them!
+      
         insertFullExplotion(
                 entities[i].xCenter, 
                 entities[i].yCenter,
@@ -365,19 +390,37 @@ function play:update(dt)
       --Create an explotion!
       elseif not entities[i]:is(Explotion) then
       
+        --Special conditions for Asteroids (And metals):
         if entities[i]:is(SpaceRock) then
           
-          explosiveSoundRock(entities[i])
-
+          --PLANET COLLECTS METAL!
+          if entities[i]:is(SpaceMetal) then
+            --search for ship:
+            for o = 1, #entities do
+              if entities[o]:is(Ship) then
+                entities[o]:collectMetal()
+                break
+              end
+            end
+            
+          else
+            
+            explosiveSoundRock(entities[i])
+            --REMOVES POINTS HERE:
+            --The rock kills many people, a number depending on it's radius:
+            xenocide(entities[i].radius ^ 3) 
+          end
         end
       
-      --REMOVES POINTS HERE IF ITS AN SPACE ROCK.
-        insertFullExplotion(
-                entities[i].xCenter, 
-                entities[i].yCenter,
-                entities[i].radius,
-                0, 
-                0)
+        if not entities[i]:is(SpaceMetal) then
+          insertFullExplotion(
+                  entities[i].xCenter, 
+                  entities[i].yCenter,
+                  entities[i].radius,
+                  0, 
+                  0)
+        end
+        
         table.remove(entities, i)
         i = i - 1          
         
@@ -420,9 +463,10 @@ function play:update(dt)
               table.remove(entities, j)
               i = i - 1
             elseif entities[j]:is(Ship) then --Against Ship.
-              if entities[i]:is(SpaceMetal) then
-                insertAndPlaySE(sourceElimination, 
-                  entities[i].xCenter, entities[i].yCenter)
+              if entities[i]:is(SpaceMetal) then --SHIP COLLECTS METAL!
+                
+                entities[j]:collectMetal() --Add one to metal counter an play sfx.
+                
                 table.remove(entities, i)
               else
                 --Play Ship's Destruction Sound Effect:
@@ -453,7 +497,7 @@ function play:update(dt)
                 local xCenter = entities[i].xCenter
                 local yCenter = entities[i].yCenter
                 
-                if math.random(1, 4) == 1 then --1/4 chance.
+                if math.random(1, 3) == 1 then --1/3 chance.
                   --Insert SpaceMetal:
                   local k = #entities --save top table place at this point.
                   local radiusExpan = radius * 3 --Radius of the asteroid, but bigger.
@@ -645,6 +689,7 @@ function play:draw()
   love.graphics.setColor(255,255,255)
   
   if not showInfo then
+    --GUI:
     local ship
     for i = 1, #entities do
       if entities[i]:is(Ship) then 
@@ -655,11 +700,21 @@ function play:draw()
     end
     if ship then
       --Make it more red the closer it gets to energy 0.
-      local coloredText = {{255, 155 + ship.energy, 155 + ship.energy},
-        ship.energy .. " / " .. ship.energyMax}
-      love.graphics.print(coloredText, 
-        ship.xCenter + ship.radius, ship.yCenter)
+      local perc = percentage(ship.energy, ship.energyMax)
+      local coloredText = {{255, perc * 2.55, perc * 2.55}, perc .. "%"}
+      love.graphics.print(coloredText, ship.xCenter + ship.radius + 5, ship.yCenter)
+ 
+      perc = percentage(ship.metals, ship.metalsMax)
+      coloredText = {{255, 255, 255}, string.format("Metals: %.1f", perc)}
+      love.graphics.print(coloredText, 4, 5)
+      
+      coloredText = {{255, 255, 255}, string.format("Population: %d", planetPop)}
+      love.graphics.print(coloredText, 4, 20)
+      
+      love.graphics.printf("Extra Ships: " .. ship.extraShips,
+        0, 5, screenWidth, "center")
     end
+    
   else
     --I NEED INFORMATION MY BOY.
     local contExplotion = 0
