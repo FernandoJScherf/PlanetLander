@@ -6,18 +6,17 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.shoot = "space"
   self.shipSpeed = 0
   self.speedMaxLanding = 50
-  self.state = 1 --1) Flying. 2) Landed.
+  self.state = 1 --1) Flying. 2) Landing. 3) Rotating. 4) TakingOff.
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
 
   
   --OF GUI:
-  self.energyMax = 1000
+  self.energyMax = 400
   self.energy = self.energyMax
-  self.metalsMax = 20
-  self.metals = 0
-  self.extraShips = 0
+  self.metalsMax = 10
+  self.metals = 10
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,

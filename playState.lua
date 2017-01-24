@@ -7,8 +7,13 @@ planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
-local planet = 7 --Represent levels.
+local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
+local extraShips = 0 --Extra lives.
+local buildingShip = 0 --After 100% of metlas were collected, this aumentates
+                            --rapidly. Velocity depends on alien population
+                            --building the ship.
+local messageToPrint = {false, false, false} --String, x, y
 maxRadius = 30 --Maximum radius for Space Rocks.
 entities = {}
 
@@ -29,6 +34,16 @@ local sourceShipDest ; local sourceRockExplosion = {}
     return a
   end
 
+local function searchShip()
+  local ship = nil
+  for i = 1, #entities do         --Search for ship in table, first.
+    if entities[i]:is(Ship) then 
+      ship = entities[i] 
+      break
+    end
+  end
+  return ship
+end
 --LOAD STATE
 ---------------------------------------------------------------
 local function placeNewDust()
@@ -54,15 +69,17 @@ function loadS:init()
     local soundData = sound:generateSoundData()
     return love.audio.newSource(soundData)
   end
-  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.25)
-  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.1)
-  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.3)
-  sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.3)
-  sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.3)
-  sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.3)
+  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.40)
+  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.25)
+  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.45)
+  sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.45)
+  sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.45)
+  sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.45)
+  sourceBuilding = sfsToSource("sounds/AwesomeBuildingShip.sfs", 0.05)
 
   --love.audio.setPosition(centerScreenX, centerScreenY, 0)
   love.audio.setDistanceModel("exponentclamped")
+  
 end
 
 function loadS:enter()
@@ -330,6 +347,7 @@ end
 --PLAY:UPDATE--------------------------------
 local shipCollidedPlanet
 local waitTime = 0
+local hasLanded = false
 function play:update(dt)
   local i = 1 
   shipCollidedPlanet = false
@@ -394,16 +412,18 @@ function play:update(dt)
         if entities[i]:is(SpaceRock) then
           
           --PLANET COLLECTS METAL!
-          if entities[i]:is(SpaceMetal) then
+          --if entities[i]:is(SpaceMetal) then
             --search for ship:
-            for o = 1, #entities do
+            --[[for o = 1, #entities do
               if entities[o]:is(Ship) then
                 entities[o]:collectMetal()
                 break
               end
-            end
+            end]]
+            --local ship = searchShip()
+            --if ship then ship:collectMetal() end --It doesn't collects metal anymore.
             
-          else
+          if not entities[i]:is(SpaceMetal) then
             
             explosiveSoundRock(entities[i])
             --REMOVES POINTS HERE:
@@ -412,14 +432,14 @@ function play:update(dt)
           end
         end
       
-        if not entities[i]:is(SpaceMetal) then
+        --if not entities[i]:is(SpaceMetal) then
           insertFullExplotion(
                   entities[i].xCenter, 
                   entities[i].yCenter,
                   entities[i].radius,
                   0, 
                   0)
-        end
+        --end
         
         table.remove(entities, i)
         i = i - 1          
@@ -497,7 +517,7 @@ function play:update(dt)
                 local xCenter = entities[i].xCenter
                 local yCenter = entities[i].yCenter
                 
-                if math.random(1, 3) == 1 then --1/3 chance.
+                if math.random(1, 2) == 1 then --1/2 chance.
                   --Insert SpaceMetal:
                   local k = #entities --save top table place at this point.
                   local radiusExpan = radius * 3 --Radius of the asteroid, but bigger.
@@ -609,7 +629,8 @@ function play:update(dt)
   circleColorVar = math.sin(circleColorTime) * 10
   circleColorTime = circleColorTime + dt
   
-  
+  local ship = searchShip()
+  local planetFinishedMult = 1
   contSpaceRock = 0
   for i = 1, #entities do
     if entities[i]:is(SpaceRock) and not entities[i]:is(SpaceMetal) then
@@ -627,30 +648,72 @@ function play:update(dt)
     timeWavesCont = timeWavesCont + dt
   --If we reached the final wave and there are no asteroids left:
   elseif contSpaceRock == 0 then 
-    for i = 1, #entities do
-      entities[i].beUpdated = false --Everything will stop moving
-    end
-    --Get the table empty to use in next gamestate.
-    --Also, lets make it pretty!
-    local entMax = #entities
-    if entMax >= 1 then
-      --Every 0.01 of a second, destroy an object.
-      if waitTime >= 0.01 then
-        sourceElimination:setPitch(math.random(25, 50) / 50)
-        insertAndPlaySE(sourceElimination, entities[entMax].xCenter,
-          entities[entMax].yCenter)
-        entities[entMax] = nil 
-        waitTime = 0
-        
+    planetFinishedMult = 15
+    if ship then
+      --After landing to fix the ship and make new one if possible:
+      if buildingShip == 0 and ship.energy >= ship.energyMax then 
+        for i = 1, #entities do
+          entities[i].beUpdated = false --Everything will stop moving
+        end
+        --Get the table empty to use in next gamestate.
+        --Also, lets make it pretty!
+        local entMax = #entities
+        if entMax >= 2 then --1 is reserved for the ship.
+          --Every 0.005 of a second, destroy an object.
+          if waitTime >= 0.005 then
+            sourceElimination:setPitch(math.random(25, 50) / 50)
+            insertAndPlaySE(sourceElimination, entities[entMax].xCenter,
+              entities[entMax].yCenter)
+            
+            --Don't Eliminate the SHIP!:
+            if entities[entMax]:is(Ship) then
+              entities[1] = entities[entMax]
+              ship = entities[1]
+            end
+            entities[entMax] = nil 
+            waitTime = 0
+            
+          else
+            waitTime = waitTime + dt
+          end
+        else
+          wavesCont = 1             --Reset values for next planet.
+          timeWavesCont = 0         --Reset values for next planet.
+          planet = planet + 1       --Add 1 to planet.
+          Gamestate.switch(loadS)   --To Get ready screen and next planet.
+        end
       else
-        waitTime = waitTime + dt
+        local sin = math.sin(waitTime) * 10
+        messageToPrint = {"Time to Land!",
+          0, centerScreenY - circleRadius * 4 + sin}
+        waitTime = waitTime + dt * 3
       end
-    else
-      wavesCont = 1             --Reset values for next planet.
-      timeWavesCont = 0         --Reset values for next planet.
-      planet = planet + 1       --Add 1 to planet.
-      Gamestate.switch(loadS)   --To Get ready screen and next planet.
     end
+  end
+  
+  --Check if 100% of metals were collected, and build next ship:  
+  if ship and ship.metals >= ship.metalsMax then
+    if ship.state == 4 then --I ship has landed
+      hasLanded = true
+    end
+    if hasLanded then
+      --Velocity of construction depends on planet Population:
+      buildingShip = buildingShip + ((planetPop + 1000) / 1250) * dt * planetFinishedMult
+      if buildingShip % 5 < 0.1 then
+        insertAndPlaySE(sourceBuilding, centerScreenX, centerScreenY)
+      end
+      if buildingShip >= 100 then
+        ship.metals = 0
+        buildingShip = 0
+        extraShips = extraShips + 1
+        hasLanded = false
+      end
+    end
+  end
+  
+  --Increase energy of the ship if is landed:
+  if ship and ship.state == 4 and ship.energy < ship.energyMax then
+    ship.energy = ship.energy + ((planetPop + 1000) / 500) * dt * planetFinishedMult
   end
 end
 
@@ -701,18 +764,30 @@ function play:draw()
     if ship then
       --Make it more red the closer it gets to energy 0.
       local perc = percentage(ship.energy, ship.energyMax)
-      local coloredText = {{255, perc * 2.55, perc * 2.55}, perc .. "%"}
+      local coloredText = {{255, perc * 2.55, perc * 2.55}, string.format("%.1f %%", perc)}
       love.graphics.print(coloredText, ship.xCenter + ship.radius + 5, ship.yCenter)
  
       perc = percentage(ship.metals, ship.metalsMax)
-      coloredText = {{255, 255, 255}, string.format("Metals: %.1f", perc)}
+      coloredText = {{255, 255, 255}, string.format("Metals: %.1f %%", perc)}
       love.graphics.print(coloredText, 4, 5)
       
       coloredText = {{255, 255, 255}, string.format("Population: %d", planetPop)}
       love.graphics.print(coloredText, 4, 20)
       
-      love.graphics.printf("Extra Ships: " .. ship.extraShips,
+      love.graphics.printf("Extra Ships: " .. extraShips,
         0, 5, screenWidth, "center")
+      
+      if buildingShip > 0 then
+        --"Building Extra Ship: " .. buildingExtraShip .. " / 100%"
+        love.graphics.printf(string.format("Building Extra Ship: %.1f %%", buildingShip),
+          0, 20, screenWidth, "center")
+      end
+      
+      if messageToPrint[1] then
+        love.graphics.printf(messageToPrint[1], messageToPrint[2], messageToPrint[3], 
+          screenWidth, "center")
+        messageToPrint[1] = false
+      end
     end
     
   else
