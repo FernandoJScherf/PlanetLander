@@ -1,14 +1,16 @@
 --PLAY GAMESTATE CALLBACKS:
 local extSpace = 40--screenWidth/4
 local showInfo = false
-local circleColor = {116, 116, 116}
+local circleColor = {116, 116, 156}
 circleRadius = 20
 planetMass = 100000
 local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
+local playerScore = 0
 local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
+local planetPopStart --Population at the start of the level.
 local extraShips = 0 --Extra lives.
 local buildingShip = 0 --After 100% of metlas were collected, this aumentates
                             --rapidly. Velocity depends on alien population
@@ -25,9 +27,9 @@ local wavesCont = 1 --Wave counter.
 local timeWaves = 30 --Time between waves of asteroids.
 local timeWavesCont = 0 --Time counter.
 
+sourceSFXR = {} --Table for the sources generated using sfxr.lua
 sources = {} --Table for sound effects that are being played.
-local sourceShipDest ; local sourceRockExplosion = {}
---[[global sourcePropulsor ; sourceLaser]]
+--[[global sourceSFXR.Propulsor ; sourceSFXR.Laser]]
 
 local function percentage(a, b)
 a = a / b * 100
@@ -61,8 +63,10 @@ local function placeNewDust()
 end
 
 function loadS:enter()
-  --Load sources if not loaded:
-  if not sourceShipDest then
+  --Load sources if not loaded. If sources are not loaded, we can also com=nclude
+  --That the game is being excuted for the first time after the menu state:
+  playerScore = 0 --So playerScore is put to 0.
+  if not sourceSFXR.ShipDest then
     --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
     local function sfsToSource(f, volume)
       local sound = sfxr.newSound()
@@ -71,13 +75,15 @@ function loadS:enter()
       local soundData = sound:generateSoundData()
       return love.audio.newSource(soundData)
     end
-    sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.40)
-    sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.25)
-    sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.45)
-    sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.45)
-    sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.45)
-    sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.45)
-    sourceBuilding = sfsToSource("sounds/AwesomeBuildingShip.sfs", 0.05)
+    sourceSFXR.ShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.40)
+    sourceSFXR.Propulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.25)
+    sourceSFXR.RockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.45)
+    sourceSFXR.Laser = sfsToSource("sounds/AwesomeLaser.sfs", 0.45)
+    sourceSFXR.LaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.45)
+    sourceSFXR.Elimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.45)
+    sourceSFXR.Building = sfsToSource("sounds/AwesomeBuildingShip.sfs", 0.05)
+    sourceSFXR.ExtraShip = sfsToSource("sounds/AwesomeExtraShip.sfs", 0.05)
+    sourceSFXR.ReCharging = sfsToSource("sounds/AwesomeEnergyCharging.sfs", 0.1)
 
     love.audio.setDistanceModel("exponentclamped")
   end
@@ -109,6 +115,8 @@ function loadS:enter()
     
     --Calculate Planet Population, proportional to level, with some random addition:
     planetPop = math.ceil((501 * planet) * (1 + math.random() / 4))
+    planetPopStart = planetPop --To keep track of the original population, when some is lost.
+    
 end
 
 function loadS:update(dt)
@@ -233,8 +241,8 @@ local function placeNewRocks(quantity, radius)
 end
 
 --[[function play:leave()
-  sourceLaser = nil
-  sourcePropulsor = nil --This one in particular was global
+  sourceSFXR.Laser = nil
+  sourceSFXR.Propulsor = nil --This one in particular was global
   --because it also needed to exist in shipClass.lua.
   --So I destroy it when I don't need it anymore.
   maxRadius = nil --Also needed to exist in spaceRock. Not anymore.
@@ -351,19 +359,21 @@ end
 
 
 local function explosiveSoundRock(ent)
-  sourceRockExplosion:setPitch(math.random(25, 50) / 50)
-  sourceRockExplosion:setVolume(ent.radius / maxRadius)        
-  insertAndPlaySE(sourceRockExplosion, ent.xCenter, ent.yCenter)
+  sourceSFXR.RockExplosion:setPitch(math.random(25, 50) / 50)
+  sourceSFXR.RockExplosion:setVolume(ent.radius / maxRadius)        
+  insertAndPlaySE(sourceSFXR.RockExplosion, ent.xCenter, ent.yCenter)
 end
 
 local function xenocide(howMany)
   if planetPop > 0 then
+    local planetPopBefore = planetPop
     howMany = howMany * (1 + math.random() / 4)--howmany + howMany * math.random() / 4
     if planetPop > howMany then
       planetPop = planetPop - howMany
     else
       planetPop = 0
     end
+    playerScore = playerScore - planetPopBefore + planetPop
   end
 end
 --play:update
@@ -388,7 +398,7 @@ function play:update(dt)
           
           if entities[i].shipSpeed > entities[i].speedMaxLanding then
 
-            insertAndPlaySE(sourceShipDest, entities[i].xCenter, 
+            insertAndPlaySE(sourceSFXR.ShipDest, entities[i].xCenter, 
               entities[i].yCenter)
 
             --REMOVE POINTS HERE:
@@ -411,8 +421,8 @@ function play:update(dt)
           end
         end
       elseif entities[i]:is(Bullet) then
-        sourceLaserVPlanet:setPitch(math.random(25, 50) / 50)
-        insertAndPlaySE(sourceLaserVPlanet, entities[i].xCenter,
+        sourceSFXR.LaserVPlanet:setPitch(math.random(25, 50) / 50)
+        insertAndPlaySE(sourceSFXR.LaserVPlanet, entities[i].xCenter,
           entities[i].yCenter)
       --REMOVE POINTS HERE:
         xenocide(144) --You killed some aliens hooting at them!
@@ -512,7 +522,7 @@ function play:update(dt)
                 table.remove(entities, i)
               else
                 --Play Ship's Destruction Sound Effect:
-                insertAndPlaySE(sourceShipDest, entities[j].xCenter, 
+                insertAndPlaySE(sourceSFXR.ShipDest, entities[j].xCenter, 
                   entities[j].yCenter)
                 --Explotion!
                 insertFullExplotion(
@@ -683,8 +693,8 @@ function play:update(dt)
         if entMax >= 2 then --1 is reserved for the ship.
           --Every 0.005 of a second, destroy an object.
           if waitTime >= 0.005 then
-            sourceElimination:setPitch(math.random(25, 50) / 50)
-            insertAndPlaySE(sourceElimination, entities[entMax].xCenter,
+            sourceSFXR.Elimination:setPitch(math.random(25, 50) / 50)
+            insertAndPlaySE(sourceSFXR.Elimination, entities[entMax].xCenter,
               entities[entMax].yCenter)
             
             --Don't Eliminate the SHIP!:
@@ -724,6 +734,7 @@ function play:update(dt)
   
     --Increase energy of the ship if is landed:
     if ship.state == 4 and ship.energy < ship.energyMax then
+      insertAndPlaySE(sourceSFXR.ReCharging, ship.xCenter, ship.yCenter)
       ship.energy = ship.energy + ((planetPop + 1000) / 500) * dt * planetFinishedMult
       if ship.energy > ship.energyMax then ship.energy = ship.energyMax end
     end
@@ -744,11 +755,12 @@ function play:update(dt)
     --Velocity of construction depends on planet Population:
     buildingShip = buildingShip + ((planetPop + 1000) / 500) * dt * planetFinishedMult
     if buildingShip % 5 < 0.1 then
-      insertAndPlaySE(sourceBuilding, centerScreenX, centerScreenY)
+      insertAndPlaySE(sourceSFXR.Building, centerScreenX, centerScreenY)
     end
     if buildingShip >= 100 then
       buildingShip = 0
       extraShips = extraShips + 1
+      insertAndPlaySE(sourceSFXR.ExtraShip, centerScreenX, centerScreenY)
       hasLanded = false
     end
   end
@@ -761,15 +773,15 @@ function play:draw()
   --Draw Atmosphere:
   local totalRadius
   local margen = 2--Add a margen so collisions occur inside visible circle.
-  for i = circleRadius, 2, -4 do
-    --local div = 116 / i + circleColorVar
-    --love.graphics.setColor(div, div, div + div)
-    
+  
+  --Make planet more red while its population decreases:
+  local perc = percentage(planetPop, planetPopStart) / 125 + 0.2
+  
+  for i = circleRadius, 2, -4 do    
     local r = circleColor[1] / i + circleColorVar
-    local g = circleColor[2] / i + circleColorVar
-    local b = circleColor[3] / i + circleColorVar
+    local g = (circleColor[2] * perc) / i + circleColorVar
+    local b = (circleColor[3] * perc) / i + circleColorVar
     love.graphics.setColor(r, g, b)
-    
     
     totalRadius = circleRadius + i * 2 + margen
     love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
@@ -782,8 +794,10 @@ function play:draw()
   end
   
   --Draw Planet:
-  love.graphics.setColor(circleColor[1] / 2 + circleColorVar, 
-    circleColor[2] / 2 + circleColorVar, circleColor[3] / 2 + circleColorVar)
+  love.graphics.setColor(
+    circleColor[1] / 2 + circleColorVar, 
+    (circleColor[2] * perc) / 2 + circleColorVar,
+    (circleColor[3] * perc) / 2 + circleColorVar)
   love.graphics.circle(fillOrLine, centerScreenX , centerScreenY, 
     circleRadius + margen) 
   love.graphics.setColor(255,255,255)
@@ -816,8 +830,14 @@ function play:draw()
       
     end
     
+    local greenBlue = 255
+    if playerScore < 0 then
+      greenBlue = 0
+    end
+    love.graphics.printf({{255, greenBlue, greenBlue}, string.format("Score: %d", playerScore)},
+      0, 5, screenWidth - 4, "right")
+    
     if buildingShip > 0 then
-      --"Building Extra Ship: " .. buildingExtraShip .. " / 100%"
       love.graphics.printf(string.format("Building Extra Ship: %.1f %%", buildingShip),
         0, 20, screenWidth, "center")
     end
@@ -898,13 +918,10 @@ function play:keyreleased(key)
   --If ship has been destroyed and there are no lives left:
   if extraShips < 0 then
     --Free sources from memory:
-    sourceShipDest = nil
-    sourcePropulsor = nil
-    sourceRockExplosion = nil
-    sourceLaser = nil
-    sourceLaserVPlanet = nil
-    sourceElimination = nil
-    sourceBuilding = nil
+    for k,v in pairs(sourceSFXR) do
+      sourceSFXR[k] = nil
+    end
+
     extraShips = 0
     for i = 1, #entities do --Empty table:
       entities[i] = nil

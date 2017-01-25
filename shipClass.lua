@@ -30,7 +30,7 @@ end
 function Ship:collectMetal()
   if self.metals < self.metalsMax then
     self.metals = self.metals + 1
-    insertAndPlaySE(sourceElimination, self.xCenter, self.yCenter)
+    insertAndPlaySE(sourceSFXR.Elimination, self.xCenter, self.yCenter)
   end
 end
 
@@ -43,7 +43,7 @@ function Ship:propulDust(x, y, angle, xSpeedObject, ySpeedObject)
     table.insert(entities, SpaceDust(x, y,
                   127 + random, 16 + random, 16 + random))
                 
-    insertAndPlaySE(sourcePropulsor, x, y)
+    insertAndPlaySE(sourceSFXR.Propulsor, x, y)
     
     --Give velocity to dust:
     local v  = 40 --pixels per second.
@@ -158,7 +158,7 @@ function Ship:update(dt)
       ent.aSpeed = 0
       
       --Laser sound:
-      insertAndPlaySE(sourceLaser, self.xCenter, self.yCenter)
+      insertAndPlaySE(sourceSFXR.Laser, self.xCenter, self.yCenter)
       
     else
       timeToShoot = timeToShoot + dt
