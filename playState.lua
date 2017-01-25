@@ -29,10 +29,10 @@ sources = {} --Table for sound effects that are being played.
 local sourceShipDest ; local sourceRockExplosion = {}
 --[[global sourcePropulsor ; sourceLaser]]
 
-  local function percentage(a, b)
-    a = a / b * 100
-    return a
-  end
+local function percentage(a, b)
+a = a / b * 100
+return a
+end
 
 local function searchShip()
   local ship = nil
@@ -83,15 +83,32 @@ function loadS:init()
 end
 
 function loadS:enter()
+
+  --First I verifie if entities[1] even exists (Not nil)
+  if entities[1] and entities[1]:is(Ship) then        --Which we made sure was a ship before
+    
+    --Save certain characterisctics we need from the ship before "reseting":
+    local saveMetals = entities[1].metals
+    local saveR = entities[1].red
+    local saveG = entities[1].green
+    local saveB = entities[1].blue
+    
+    --"Reset" Ship, but with those characteristics:
+    entities[1] = Ship(-extSpace * 0.75, centerScreenY * 1.5, saveR, saveG, saveB)
+    entities[1].metals = saveMetals
+  else
+    
     entities[1] = Ship(-extSpace * 0.75, centerScreenY * 1.5,
       circleColor[1] + circleColorVar,
       circleColor[2] + circleColorVar, circleColor[3] + circleColorVar)
-    entities[1]:rotate(1, -math.pi / 2 )
-    entities[1].aSpeed = 0
-    placeNewDust()
+  end
+  
+  entities[1]:rotate(1, -math.pi / 2 )
+  entities[1].aSpeed = 0
+  placeNewDust()
     
     --Calculate Planet Population, proportional to level, with some random addition:
-    planetPop = math.ceil((2001 * planet) * (1 + math.random() / 4))
+    planetPop = math.ceil((501 * planet) * (1 + math.random() / 4))
 end
 
 function loadS:update(dt)
@@ -109,7 +126,6 @@ function loadS:update(dt)
     end
 end
 
---IF planet changed to 2 and beyond, print "well Done first".
 function loadS:draw()
   love.graphics.setColor(circleColor[1] + circleColorVar,
     circleColor[2] + circleColorVar, circleColor[3] + circleColorVar)
@@ -131,8 +147,8 @@ end
 
 function loadS:keyreleased(key)
   if loaded then 
-    --Get the table empty to use in next gamestate.
-    for i = 1, #entities do
+    --Get the table empty to use in next gamestate. (Except for ship, that is in entities[1]
+    for i = 2, #entities do
       entities[i] = nil
     end
     
@@ -226,11 +242,17 @@ end
 end]]
 
 function play:enter()
-  entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
-         math.random(0, 100), math.random(0, 100), math.random(150, 170))
+  --[[entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
+         math.random(0, 100), math.random(0, 100), math.random(150, 170))]]
   --entities[1].xSpeed = 25
+  --Ship was created in LoadS:enter(). JUST MOVE IT!
+  entities[1]:teleTransport(centerScreenX + 100, centerScreenY + 70)
+  entities[1].energy = entities[1].energyMax
+  entities[1].xSpeed = 0
+  entities[1].ySpeed = 0
   entities[1].aSpeed = 0
   entities[1]:rotate(1, math.pi / 2 + 0.2)
+  entities[1].gravAffected = true --This was made false in loadS:update
   
   --Insert Space Dust:
   placeNewDust()
@@ -256,9 +278,9 @@ function play:enter()
     circleColor[pos] = circleColor[pos] - 255
   end
   --And the mass and radius:
-  circleRadius = math.random(10, 30)
-  --The mass is proportional to the radius:
-  planetMass = circleRadius * 4000  
+  circleRadius = math.random(7, 35)
+  --The mass is proportional to the Area:
+  planetMass = (circleRadius  ^ 2) * 125  --Area = radio ^ 2 * pi
   --print(circleRadius .. " " .. planetMass)
 end
 
@@ -517,7 +539,7 @@ function play:update(dt)
                 local xCenter = entities[i].xCenter
                 local yCenter = entities[i].yCenter
                 
-                if math.random(1, 2) == 1 then --1/2 chance.
+                if math.random(1, 3) == 1 then --1/3 chance.
                   --Insert SpaceMetal:
                   local k = #entities --save top table place at this point.
                   local radiusExpan = radius * 3 --Radius of the asteroid, but bigger.
@@ -667,8 +689,8 @@ function play:update(dt)
             
             --Don't Eliminate the SHIP!:
             if entities[entMax]:is(Ship) then
-              entities[1] = entities[entMax]
-              ship = entities[1]
+              entities[1] = entities[entMax]  --THE SHIP IS SAVED IN FIRST POSITION.
+              ship = entities[1]              --This is important in LoadS:enter()
             end
             entities[entMax] = nil 
             waitTime = 0
@@ -714,6 +736,7 @@ function play:update(dt)
   --Increase energy of the ship if is landed:
   if ship and ship.state == 4 and ship.energy < ship.energyMax then
     ship.energy = ship.energy + ((planetPop + 1000) / 500) * dt * planetFinishedMult
+    if ship.energy > ship.energyMax then ship.energy = ship.energyMax end
   end
 end
 

@@ -5,18 +5,17 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
   self.shoot = "space"
   self.shipSpeed = 0
-  self.speedMaxLanding = 50
+  self.speedMaxLanding = 60
   self.state = 1 --1) Flying. 2) Landing. 3) Rotating. 4) TakingOff.
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
 
-  
   --OF GUI:
   self.energyMax = 400
   self.energy = self.energyMax
   self.metalsMax = 10
-  self.metals = 10
+  self.metals = 0
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -129,7 +128,7 @@ function Ship:update(dt)
      
     self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
   end
-  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.25 then
+  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.15 then
     if self.state == 1 then
       self:accel(-3, dt)  -- Every shot makes the ship go slower.
     end
