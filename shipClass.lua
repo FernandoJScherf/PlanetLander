@@ -10,6 +10,7 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.angleC = 0
   self.rotation = 0
   self.collidable = true
+  self.inputActive = true
 
   --OF GUI:
   self.energyMax = 400
@@ -110,55 +111,58 @@ function Ship:update(dt)
     self.rotation = math.atan2(y, x)
   
   --SHIP CONTROL:
-  local acceleration = 10
-  local waitTime = 0.07
-  if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
-    self.aSpeed = self.aSpeed + acceleration * dt
-    self:propulDust(self.vertices[11], self.vertices[12], 
-      self.rotation + piDiv2, self.xSpeed, self.ySpeed)
-    --Dust will be out of one of the vertices of the ship. (That is rotating)
-  end
-  if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
-    self.aSpeed = self.aSpeed - acceleration * dt
-    self:propulDust(self.vertices[7], self.vertices[8], 
-      self.rotation - piDiv2, self.xSpeed, self.ySpeed)
-    --Dust will be out of one of the vertices of the ship. (That is rotating)
-  end
-  if love.keyboard.isDown(self.accelerate) and self.state == 1 then
-     
-    self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
-  end
-  if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.15 then
-    if self.state == 1 then
-      self:accel(-3, dt)  -- Every shot makes the ship go slower.
+  if self.inputActive and self.energy > 0 then  --Inactive when specified in playstate or when 
+                                                --there is no energy.
+    local acceleration = 10
+    local waitTime = 0.07
+    if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
+      self.aSpeed = self.aSpeed + acceleration * dt
+      self:propulDust(self.vertices[11], self.vertices[12], 
+        self.rotation + piDiv2, self.xSpeed, self.ySpeed)
+      --Dust will be out of one of the vertices of the ship. (That is rotating)
     end
-    
-    local random = math.random(0, 50)
-    table.insert(entities, Bullet(
-        self.vertices[3],
-        self.vertices[4],
-        200 + random, 
-        20 + random, 
-        70 + random))
-    
-    timeToShoot = 0
-    
-    local angle = self.rotation - piDiv2
-    local ent = entities[#entities]
-    ent:rotate(1, angle) --Rotate vertices of BULLET depending on ship angle when it shoots.
+    if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
+      self.aSpeed = self.aSpeed - acceleration * dt
+      self:propulDust(self.vertices[7], self.vertices[8], 
+        self.rotation - piDiv2, self.xSpeed, self.ySpeed)
+      --Dust will be out of one of the vertices of the ship. (That is rotating)
+    end
+    if love.keyboard.isDown(self.accelerate) and self.state == 1 then
+       
+      self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
+    end
+    if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.15 then
+      if self.state == 1 then
+        self:accel(-3, dt)  -- Every shot makes the ship go slower.
+      end
+      
+      local random = math.random(0, 50)
+      table.insert(entities, Bullet(
+          self.vertices[3],
+          self.vertices[4],
+          200 + random, 
+          20 + random, 
+          70 + random))
+      
+      timeToShoot = 0
+      
+      local angle = self.rotation - piDiv2
+      local ent = entities[#entities]
+      ent:rotate(1, angle) --Rotate vertices of BULLET depending on ship angle when it shoots.
 
-    --Give velocity to bullet:
-    local v  = 300 --pixels per second.
-    angle = angle + piDiv2
-    ent.xSpeed = v*math.cos(angle) + self.xSpeed
-    ent.ySpeed = v*math.sin(angle) + self.ySpeed
-    ent.aSpeed = 0
-    
-    --Laser sound:
-    insertAndPlaySE(sourceLaser, self.xCenter, self.yCenter)
-    
-  else
-    timeToShoot = timeToShoot + dt
+      --Give velocity to bullet:
+      local v  = 300 --pixels per second.
+      angle = angle + piDiv2
+      ent.xSpeed = v*math.cos(angle) + self.xSpeed
+      ent.ySpeed = v*math.sin(angle) + self.ySpeed
+      ent.aSpeed = 0
+      
+      --Laser sound:
+      insertAndPlaySE(sourceLaser, self.xCenter, self.yCenter)
+      
+    else
+      timeToShoot = timeToShoot + dt
+    end
   end
   
   if self.state == 1 then --ONLY IF FLYING.

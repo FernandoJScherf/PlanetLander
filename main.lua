@@ -77,7 +77,7 @@ function love.keypressed(key)
   if key == "escape" then
     love.event.quit()
   end
-  if key == "l" or key == "f" then
+  if (key == "l" or key == "f") and love.keyboard.isDown("lctrl") then 
     if fillOrLine == "line" then
       fillOrLine = "fill"
     else

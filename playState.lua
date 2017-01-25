@@ -60,29 +60,28 @@ local function placeNewDust()
   end
 end
 
-function loadS:init()
-  --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
-  local function sfsToSource(f, volume)
-    local sound = sfxr.newSound()
-    sound:loadBinary(f)
-    sound.volume.sound = volume
-    local soundData = sound:generateSoundData()
-    return love.audio.newSource(soundData)
-  end
-  sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.40)
-  sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.25)
-  sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.45)
-  sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.45)
-  sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.45)
-  sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.45)
-  sourceBuilding = sfsToSource("sounds/AwesomeBuildingShip.sfs", 0.05)
-
-  --love.audio.setPosition(centerScreenX, centerScreenY, 0)
-  love.audio.setDistanceModel("exponentclamped")
-  
-end
-
 function loadS:enter()
+  --Load sources if not loaded:
+  if not sourceShipDest then
+    --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
+    local function sfsToSource(f, volume)
+      local sound = sfxr.newSound()
+      sound:loadBinary(f)
+      sound.volume.sound = volume
+      local soundData = sound:generateSoundData()
+      return love.audio.newSource(soundData)
+    end
+    sourceShipDest = sfsToSource("sounds/AwesomeShipDestruction.sfs", 0.40)
+    sourcePropulsor = sfsToSource("sounds/AwesomePropulsor.sfs", 0.25)
+    sourceRockExplosion = sfsToSource("sounds/AwesomeExplosion.sfs", 0.45)
+    sourceLaser = sfsToSource("sounds/AwesomeLaser.sfs", 0.45)
+    sourceLaserVPlanet = sfsToSource("sounds/AwesomeLaserAgainstPlanet.sfs", 0.45)
+    sourceElimination = sfsToSource("sounds/AwesomeCleaning.sfs", 0.45)
+    sourceBuilding = sfsToSource("sounds/AwesomeBuildingShip.sfs", 0.05)
+
+    love.audio.setDistanceModel("exponentclamped")
+  end
+
 
   --First I verifie if entities[1] even exists (Not nil)
   if entities[1] and entities[1]:is(Ship) then        --Which we made sure was a ship before
@@ -105,6 +104,7 @@ function loadS:enter()
   
   entities[1]:rotate(1, -math.pi / 2 )
   entities[1].aSpeed = 0
+  entities[1].inputActive = false --The player shouldn't be able to controll the ship now.
   placeNewDust()
     
     --Calculate Planet Population, proportional to level, with some random addition:
@@ -242,17 +242,33 @@ end
 end]]
 
 function play:enter()
+  --Every level, the color of the planet should be different:
+  local pos = planet + 2
+  local shouldbethreeanyway = #circleColor
+  while pos > shouldbethreeanyway do
+    pos = pos - #circleColor
+  end
+  circleColor[pos] = circleColor[pos] * (planet + 1)
+  while circleColor[pos] > 255 do
+    circleColor[pos] = circleColor[pos] - 255
+  end
+  --And the mass and radius:
+  circleRadius = math.random(15, 35)
+  --The mass is proportional to the Area:
+  planetMass = (circleRadius  ^ 2) * 150  --Area = radio ^ 2 * pi
+  --print(circleRadius .. " " .. planetMass)
   --[[entities[1] = Ship(centerScreenX + 100, centerScreenY + 70,
          math.random(0, 100), math.random(0, 100), math.random(150, 170))]]
   --entities[1].xSpeed = 25
   --Ship was created in LoadS:enter(). JUST MOVE IT!
-  entities[1]:teleTransport(centerScreenX + 100, centerScreenY + 70)
+  entities[1]:teleTransport(centerScreenX, centerScreenY - circleRadius - 2 - entities[1].radius)
   entities[1].energy = entities[1].energyMax
   entities[1].xSpeed = 0
   entities[1].ySpeed = 0
   entities[1].aSpeed = 0
-  entities[1]:rotate(1, math.pi / 2 + 0.2)
+  entities[1]:rotate(1, -math.pi / 2 )
   entities[1].gravAffected = true --This was made false in loadS:update
+  entities[1].inputActive = true --This was made false in loadS:enter
   
   --Insert Space Dust:
   placeNewDust()
@@ -266,22 +282,6 @@ function play:enter()
   waves = math.floor(logPlanet * 4 + 2)
   --Times between waves of asteroids depends on the number of planet:
   timeWaves = logPlanet * 16 + 18
-  
-  --Every level, the color of the planet should be different:
-  local pos = planet + 2
-  local shouldbethreeanyway = #circleColor
-  while pos > shouldbethreeanyway do
-    pos = pos - #circleColor
-  end
-  circleColor[pos] = circleColor[pos] * (planet + 1)
-  while circleColor[pos] > 255 do
-    circleColor[pos] = circleColor[pos] - 255
-  end
-  --And the mass and radius:
-  circleRadius = math.random(7, 35)
-  --The mass is proportional to the Area:
-  planetMass = (circleRadius  ^ 2) * 125  --Area = radio ^ 2 * pi
-  --print(circleRadius .. " " .. planetMass)
 end
 
 
@@ -366,7 +366,7 @@ local function xenocide(howMany)
     end
   end
 end
---PLAY:UPDATE--------------------------------
+--play:update
 local shipCollidedPlanet
 local waitTime = 0
 local hasLanded = false
@@ -713,30 +713,44 @@ function play:update(dt)
     end
   end
   
-  --Check if 100% of metals were collected, and build next ship:  
-  if ship and ship.metals >= ship.metalsMax then
-    if ship.state == 4 then --I ship has landed
-      hasLanded = true
-    end
-    if hasLanded then
-      --Velocity of construction depends on planet Population:
-      buildingShip = buildingShip + ((planetPop + 1000) / 1250) * dt * planetFinishedMult
-      if buildingShip % 5 < 0.1 then
-        insertAndPlaySE(sourceBuilding, centerScreenX, centerScreenY)
-      end
-      if buildingShip >= 100 then
+  if ship then --If ship exist in table (Was not destroyed)
+    --Check if 100% of metals were collected, and build next ship:  
+    if ship.metals >= ship.metalsMax then
+      if ship.state == 4 then --If ship has landed
+        hasLanded = true
         ship.metals = 0
-        buildingShip = 0
-        extraShips = extraShips + 1
-        hasLanded = false
       end
     end
+  
+    --Increase energy of the ship if is landed:
+    if ship.state == 4 and ship.energy < ship.energyMax then
+      ship.energy = ship.energy + ((planetPop + 1000) / 500) * dt * planetFinishedMult
+      if ship.energy > ship.energyMax then ship.energy = ship.energyMax end
+    end
+  
+  --If ship is not in table (Was destroyed):
+  else
+    extraShips = extraShips - 1
+    if extraShips >= 0 then
+      table.insert(entities, Ship(centerScreenX, centerScreenY - circleRadius - 2 - entities[1].radius,
+        circleColor[1], circleColor[2], circleColor[3]))
+      entities[#entities]:rotate(1, math.pi)
+    end
+    --In play:keyreleased if player presses a key, goes to the scorestate, if there are no lives left.
   end
   
-  --Increase energy of the ship if is landed:
-  if ship and ship.state == 4 and ship.energy < ship.energyMax then
-    ship.energy = ship.energy + ((planetPop + 1000) / 500) * dt * planetFinishedMult
-    if ship.energy > ship.energyMax then ship.energy = ship.energyMax end
+  --Increase energy of the ship if it has landed:
+  if hasLanded then
+    --Velocity of construction depends on planet Population:
+    buildingShip = buildingShip + ((planetPop + 1000) / 500) * dt * planetFinishedMult
+    if buildingShip % 5 < 0.1 then
+      insertAndPlaySE(sourceBuilding, centerScreenX, centerScreenY)
+    end
+    if buildingShip >= 100 then
+      buildingShip = 0
+      extraShips = extraShips + 1
+      hasLanded = false
+    end
   end
 end
 
@@ -800,19 +814,20 @@ function play:draw()
       love.graphics.printf("Extra Ships: " .. extraShips,
         0, 5, screenWidth, "center")
       
-      if buildingShip > 0 then
-        --"Building Extra Ship: " .. buildingExtraShip .. " / 100%"
-        love.graphics.printf(string.format("Building Extra Ship: %.1f %%", buildingShip),
-          0, 20, screenWidth, "center")
-      end
-      
-      if messageToPrint[1] then
-        love.graphics.printf(messageToPrint[1], messageToPrint[2], messageToPrint[3], 
-          screenWidth, "center")
-        messageToPrint[1] = false
-      end
     end
     
+    if buildingShip > 0 then
+      --"Building Extra Ship: " .. buildingExtraShip .. " / 100%"
+      love.graphics.printf(string.format("Building Extra Ship: %.1f %%", buildingShip),
+        0, 20, screenWidth, "center")
+    end
+    
+    if messageToPrint[1] then
+      love.graphics.printf(messageToPrint[1], messageToPrint[2], messageToPrint[3], 
+        screenWidth, "center")
+      messageToPrint[1] = false
+    end
+      
   else
     --I NEED INFORMATION MY BOY.
     local contExplotion = 0
@@ -851,7 +866,7 @@ function play:draw()
     love.graphics.print("contSpaceRock: " .. contSpaceRock, 0, 20)
     love.graphics.print("contShip: " .. contShip, 0, 30)
     love.graphics.print("contBullet: " .. contBullet, 0, 40)
-    love.graphics.print("contExplotion: " .. contExplotion, 0, 50)
+    love.graphics.print("contExplosion: " .. contExplotion, 0, 50)
     love.graphics.print("shipSpeed: " .. 
       (string.format("%.2f", shipSpeed)) .. "pps", 0, 60)
     love.graphics.print("speedMaxLanding: " .. speedMaxLanding .. "pps", 0, 70)
@@ -874,7 +889,27 @@ function play:draw()
 end
 
 function play:keypressed(key)
-  if key == "i" then-- and love.keyboard.isDown("i") then
+  if key == "i" and love.keyboard.isDown("lctrl") then
     showInfo = not showInfo
+  end
+end
+
+function play:keyreleased(key)
+  --If ship has been destroyed and there are no lives left:
+  if extraShips < 0 then
+    --Free sources from memory:
+    sourceShipDest = nil
+    sourcePropulsor = nil
+    sourceRockExplosion = nil
+    sourceLaser = nil
+    sourceLaserVPlanet = nil
+    sourceElimination = nil
+    sourceBuilding = nil
+    extraShips = 0
+    for i = 1, #entities do --Empty table:
+      entities[i] = nil
+    end
+    planet = 1 --Reset Planet.
+    Gamestate.switch(score)
   end
 end
