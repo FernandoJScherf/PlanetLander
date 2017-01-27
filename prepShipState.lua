@@ -9,23 +9,27 @@ function preparingShip:enter(from, circleColor)
 end
 
 function preparingShip:update(dt)
-  --Time will "go slower":
-  self.from:update(dt / 5)
-  time = time + dt
-  
   if time >= 3 then
+    --Add cool SFX:
+    insertAndPlaySE(sourceSFXR.NextShip, centerScreenX, centerScreenY)
     Gamestate.pop()
   end
+  
+  time = time + dt
 end
 
 function preparingShip:draw()
   -- draw previous screen
   self.from:draw()
+  local cos = math.cos(time) * 127 + 127
+  love.graphics.setColor(255, 255, 255, cos)
+  love.graphics.rectangle('fill', 0,0, screenWidth, screenHeight)
+  love.graphics.setColor(255, 255, 255)
 end
 
 function preparingShip:leave()
   table.insert(entities, Ship(centerScreenX, centerScreenY, self.circleR, self.circleG, self.circleB))
   local entShip = entities[#entities]
   entShip:rotate(1, math.pi)
-  entShip:teleTransport(entShip.xCenter, entShip.yCenter - circleRadius - 2 - entities[1].radius)
+  entShip:teleTransport(entShip.xCenter, entShip.yCenter - (circleRadius + 2 + entShip.radius))
 end

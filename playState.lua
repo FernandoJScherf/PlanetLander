@@ -87,6 +87,8 @@ function loadS:enter()
     sourceSFXR.ExtraShip = sfsToSource("sounds/AwesomeExtraShip.sfs", 0.05)
     sourceSFXR.ReCharging = sfsToSource("sounds/AwesomeEnergyCharging.sfs", 0.1)
     sourceSFXR.TimeToLand = sfsToSource("sounds/AwesomeTimeToLand.sfs", 0.035)
+    sourceSFXR.NextShip = sfsToSource("sounds/AwesomeNextShip.sfs", 0.06)
+    sourceSFXR.ShipOut = sfsToSource("sounds/AwesomeShipOut.sfs", 0.06)
 
     love.audio.setDistanceModel("exponentclamped")
   end
@@ -268,7 +270,7 @@ function play:enter()
   end
   
   --And the mass and radius:
-  circleRadius = math.random(15, 35)
+  circleRadius = 35--math.random(15, 35)
   --The mass is proportional to the Area:
   planetMass = (circleRadius  ^ 2) * 150  --Area = radio ^ 2 * pi
   --print(circleRadius .. " " .. planetMass)
@@ -663,6 +665,10 @@ function play:update(dt)
         entities[i].yCenter > screenHeight + extSpace or
         entities[i].yCenter < -extSpace then
       
+      --Special sound for ship getting out of bounds:
+      if entities[i]:is(Ship) then
+        insertAndPlaySE(sourceSFXR.ShipOut, centerScreenX, centerScreenY)
+      end
       table.remove(entities, i)
       i = i - 1
     end  
@@ -787,7 +793,7 @@ function play:update(dt)
         circleColor[1], circleColor[2], circleColor[3]))
       local entShip = entities[#entities]
       entShip:rotate(1, math.pi)
-      entShip:teleTransport(entShip.xCenter, entShip.yCenter - circleRadius - 2 - entities[1].radius)]]
+      entShip:teleTransport(entShip.xCenter, entShip.yCenter - circleRadius - 2 - entShip.radius)]]
     end
     if extraShips >= 1 then extraShips = extraShips - 1 end
     --In play:keyreleased if player presses a key, goes to the scorestate, if there are no lives left.
