@@ -35,6 +35,8 @@ function love.load()
   play = {} --Game gamestate
   score = {} --High Score gamestate
   loadS = {} --Load gamestate. To generate the sound effects, which takes its time.
+  pause = {} --Pause gamestate.
+  preparingShip = {} --State that happens when player loses ships, but still has extras.
   
   Object = require "classic"
   Gamestate = require "gamestate"
@@ -50,6 +52,8 @@ function love.load()
   require "explotionClass"
   sfxr = require("sfxr")
   require "spaceMetalClass"
+  require "pauseState"
+  require "prepShipState"
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")

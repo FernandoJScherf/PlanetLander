@@ -13,10 +13,10 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.inputActive = true
 
   --OF GUI:
-  self.energyMax = 400
+  self.energyMax = 500
   self.energy = self.energyMax
   self.metalsMax = 10
-  self.metals = 0
+  self.metals = 9
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -131,7 +131,7 @@ function Ship:update(dt)
        
       self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
     end
-    if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.15 then
+    if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.025 then
       if self.state == 1 then
         self:accel(-3, dt)  -- Every shot makes the ship go slower.
       end

@@ -14,7 +14,7 @@ function score:draw()
   backToScreenAndUpscale()
 end
 
-function score:keyreleased(key)
+function score:keypressed(key)
   Gamestate.switch(menu)
   music:stop()
 end

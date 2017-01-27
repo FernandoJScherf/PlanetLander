@@ -16,7 +16,7 @@ function menu:draw()
   backToScreenAndUpscale()
 end
 
-function menu:keyreleased(key)
+function menu:keypressed(key)
   if key == "h" then
     Gamestate.switch(score)
   else
