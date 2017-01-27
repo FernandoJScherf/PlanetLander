@@ -16,7 +16,7 @@ function Ship:new(xCenter, yCenter, red, green, blue)
   self.energyMax = 500
   self.energy = self.energyMax
   self.metalsMax = 10
-  self.metals = 9
+  self.metals = 0
 
   local vertices = {  -4 ,  2 ,
                        0 ,  6 ,
@@ -61,7 +61,7 @@ function Ship:propulDust(x, y, angle, xSpeedObject, ySpeedObject)
   end
 end
 
-function Ship:teleTransport(x, y)
+--[[function Ship:teleTransport(x, y)
   xDistanceToNewPos = x - self.xCenter
   yDistanceToNewPos = y - self.yCenter
   self.xCenter = x
@@ -71,7 +71,7 @@ function Ship:teleTransport(x, y)
     self.vertices[i] = self.vertices[i] + xDistanceToNewPos
     self.vertices[i+1] = self.vertices[i+1] + yDistanceToNewPos
   end
-end
+end--]]
 
 function Ship:accel(accel, dt)
   local angle = self.rotation

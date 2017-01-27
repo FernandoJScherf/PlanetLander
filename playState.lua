@@ -11,7 +11,7 @@ local playerScore = 0
 local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
 local planetPopStart --Population at the start of the level.
-local extraShips = 1 --Extra lives.
+local extraShips = 0 --Extra lives.
 local buildingShip = 0 --After 100% of metlas were collected, this aumentates
                             --rapidly. Velocity depends on alien population
                             --building the ship.
@@ -185,13 +185,22 @@ function checkColl(x1, y1, r1, x2, y2, r2)
   end 
 end
 
+local sectorCounter = planet
+local sector = 1
 local function placeNewRocks(quantity, radius)
   limit = quantity + #entities
   for i = 1 + #entities, limit  do
-    local color = math.random(30, 220)
+    local color = math.random(60, 220)
     
     --There are 4 sectors, all of them out of the screen, where
-    local sector = math.random(1,4) --an asteroid can appear.
+    if sectorCounter >= planet then
+      sector = math.random(1,4) --Choose in which sector an asteroid can appear.
+      sectorCounter = 0
+    else
+      sectorCounter =  sectorCounter + 1
+    end
+    
+    
     local x ; local y ; local xS ; local yS
     local searchingPosition = true
     
@@ -292,7 +301,7 @@ function play:enter()
   
   --Calculate Difficulty of the current planet:
   --By the way, a "planet" is a "level".
-  placeNewRocks(planet, 9)  --Asteroids at the biggining of planet.
+  placeNewRocks(planet, 13)  --Asteroids at the biggining of planet.
   --Number of waves of asteroids depends on the number of planet.
   --waves = math.floor( ((planet - 1) / 2) + 2 )
   local logPlanet = math.log10(planet)
@@ -374,7 +383,7 @@ local function explosiveSoundRock(ent)
 end
 
 local function xenocide(howMany)
-  if extraShips >= 0 then --If the player is still in the game.
+  if searchShip() or buildingShip > 0 then --If the player is still in the game.
     if planetPop > 0 then
       local planetPopBefore = planetPop
       howMany = howMany * (1 + math.random() / 4)--howmany + howMany * math.random() / 4
@@ -387,6 +396,7 @@ local function xenocide(howMany)
     end
   end
 end
+
 --play:update
 local shipCollidedPlanet
 local waitTime = 0
@@ -523,6 +533,23 @@ function play:update(dt)
               entities[j].xSpeed = xSpeedJ
               entities[j].ySpeed = ySpeedJ
               
+              --To avoid bug of the rocks "sticking" to each other if one
+              --happens to appear inside of the other:
+              local entI = entities[i]; local entJ = entities[j]
+              local xI = entI.xCenter;  local yI = entI.yCenter
+              local xJ = entJ.xCenter;  local yJ = entJ.yCenter
+              local time = 0
+              while checkColl(xI, yI, entI.radius, xJ, yJ, entJ.radius)
+                and time < 0.5 do
+                xI = xI + xSpeedI * dt
+                yI = yI + ySpeedI * dt
+                xJ = xJ + xSpeedJ * dt
+                yJ = yJ + ySpeedJ * dt
+                time = time + dt
+              end
+              entI:teleTransport(xI, yI)
+              entJ:teleTransport(xJ, yJ)
+              
             elseif entities[j]:is(SpaceDust) then--Against SpaceDust.
               table.remove(entities, j)
               i = i - 1
@@ -564,7 +591,7 @@ function play:update(dt)
                 local xCenter = entities[i].xCenter
                 local yCenter = entities[i].yCenter
                 
-                if math.random(1, 3) == 1 then --1/3 chance.
+                if math.random(1, 4) == 1 then --1/4 chance.
                   --Insert SpaceMetal:
                   local k = #entities --save top table place at this point.
                   local radiusExpan = radius * 3 --Radius of the asteroid, but bigger.
@@ -692,7 +719,7 @@ function play:update(dt)
   if wavesCont < waves then
     --If all asteroids were eliminated or the time for next wave is up:
     if contSpaceRock == 0 or timeWavesCont >= timeWaves then
-      placeNewRocks(planet, 9)
+      placeNewRocks(planet, 13)
       timeWavesCont = 0
       wavesCont = wavesCont + 1 --Next wave.
     end
@@ -809,7 +836,6 @@ function play:update(dt)
     if buildingShip >= 100 then
       buildingShip = 0
       extraShips = extraShips + 1
-      print(extraShips)
       insertAndPlaySE(sourceSFXR.ExtraShip, centerScreenX, centerScreenY)
       hasLanded = false
     end
