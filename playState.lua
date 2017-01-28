@@ -174,7 +174,7 @@ end
 --PLAY STATE:
 ---------------------------------------------------------------
 function checkColl(x1, y1, r1, x2, y2, r2)
-  local entity = entities[i]
+  --local entity = entities[i]
   local dX = math.abs(x2 - x1)
   local dY = math.abs(y2 - y1)
   local dRadius = (r1 + r2)
@@ -392,7 +392,8 @@ local function xenocide(howMany)
       else
         planetPop = 0
       end
-      playerScore = playerScore - planetPopBefore + planetPop
+      --playerScore = playerScore - planetPopBefore + planetPop
+      playerScore = playerScore - (planetPopBefore - planetPop) * planet - 10
     end
   end
 end
@@ -447,7 +448,7 @@ function play:update(dt)
         insertAndPlaySE(sourceSFXR.LaserVPlanet, entities[i].xCenter,
           entities[i].yCenter)
       --REMOVE POINTS HERE:
-        xenocide(144) --You killed some aliens hooting at them!
+        xenocide(144) --You killed some aliens shooting at them!
       
         insertFullExplotion(
                 entities[i].xCenter, 
@@ -505,12 +506,16 @@ function play:update(dt)
       
     else
     --ENTITIES VS ENTITIES:
-      for j = i + 1, #entities do
-        
-        if  checkColl(entities[i].xCenter, entities[i].yCenter,
-            entities[i].radius, entities[j].xCenter, entities[j].yCenter,
+      --for j = i + 1, #entities do
+      local j = i + 1
+      while j <= #entities and i <= #entities do
+
+        if entities[i] and
+          checkColl(entities[i].xCenter, entities[i].yCenter,
+            entities[i].radius, 
+            entities[j].xCenter, entities[j].yCenter,
             entities[j].radius) then
-            
+
           --So SpaceRock type is always in entities[i] if there is in fact 
           --an SpaceRock in the comparison:
           if entities[j]:is(SpaceRock) and 
@@ -520,40 +525,7 @@ function play:update(dt)
             entities[j] = entSave
           end
           if entities[i]:is(SpaceRock) then --If there is an Space Rock.
-            if entities[j]:is(SpaceRock) then--Against another spaceRock.
-                                            
-              local xSpeedI ; local ySpeedI
-              local xSpeedJ ; local ySpeedJ
-              --ELASTIC COLLISION MAN!!!!
-              xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
-              elastic(entities[i], entities[j])
-              
-              entities[i].xSpeed = xSpeedI
-              entities[i].ySpeed = ySpeedI
-              entities[j].xSpeed = xSpeedJ
-              entities[j].ySpeed = ySpeedJ
-              
-              --To avoid bug of the rocks "sticking" to each other if one
-              --happens to appear inside of the other:
-              local entI = entities[i]; local entJ = entities[j]
-              local xI = entI.xCenter;  local yI = entI.yCenter
-              local xJ = entJ.xCenter;  local yJ = entJ.yCenter
-              local time = 0
-              while checkColl(xI, yI, entI.radius, xJ, yJ, entJ.radius)
-                and time < 0.5 do
-                xI = xI + xSpeedI * dt
-                yI = yI + ySpeedI * dt
-                xJ = xJ + xSpeedJ * dt
-                yJ = yJ + ySpeedJ * dt
-                time = time + dt
-              end
-              entI:teleTransport(xI, yI)
-              entJ:teleTransport(xJ, yJ)
-              
-            elseif entities[j]:is(SpaceDust) then--Against SpaceDust.
-              table.remove(entities, j)
-              i = i - 1
-            elseif entities[j]:is(Ship) then --Against Ship.
+            if entities[j]:is(Ship) then --Against Ship.
               if entities[i]:is(SpaceMetal) then --SHIP COLLECTS METAL!
                 
                 entities[j]:collectMetal() --Add one to metal counter an play sfx.
@@ -574,6 +546,7 @@ function play:update(dt)
                 table.remove(entities, j)
               end
               i = i - 1
+              break
             elseif entities[j]:is(Bullet) then --Against Bullet.              
               local xSpeedI ; local ySpeedI
               local xSpeedJ ; local ySpeedJ
@@ -668,10 +641,66 @@ function play:update(dt)
               table.remove(entities, j)
               table.remove(entities, i)
               i = i - 1
+            
+            elseif entities[j]:is(SpaceRock) then--Against another spaceRock.
+                                            
+              local xSpeedI ; local ySpeedI
+              local xSpeedJ ; local ySpeedJ
+              --ELASTIC COLLISION MAN!!!!
+              xSpeedI, ySpeedI, xSpeedJ, ySpeedJ = 
+              elastic(entities[i], entities[j])
+              
+              entities[i].xSpeed = xSpeedI
+              entities[i].ySpeed = ySpeedI
+              entities[j].xSpeed = xSpeedJ
+              entities[j].ySpeed = ySpeedJ
+              --[[
+              --To avoid bug of the rocks "sticking" to each other if one
+              --happens to appear inside of the other:
+              local entI = entities[i]; local entJ = entities[j]
+              local xDif = entI.xCenter - entJ.xCenter
+              local yDif = entI.yCenter - entJ.yCenter
+              local angleCenterPoints = math.atan2(yDif, xDif)
+              local dBetwPoints = math.sqrt(xDif ^ 2 + yDif ^ 2)
+              local intersect = entI.radius + entJ.radius - dBetwPoints + 2
+              local xInterDiv2 = (intersect * math.cos(angleCenterPoints)) / 2
+              local yInterDiv2 = (intersect * math.sin(angleCenterPoints)) / 2
+              local xI = entI.xCenter;              local yI = entI.yCenter
+              local xJ = entJ.xCenter;              local yJ = entJ.yCenter
+              while checkColl(xI, yI, entI.radius, xJ, yJ, entJ.radius) do
+                xI = xI + xInterDiv2
+                yI = yI + yInterDiv2
+                xJ = xJ - xInterDiv2
+                yJ = yJ - yInterDiv2
+              end
+              entI:teleTransport(xI, yI)
+              entJ:teleTransport(xJ, yJ)
+              --[[local entI = entities[i]; local entJ = entities[j]
+              local xI = entI.xCenter;  local yI = entI.yCenter
+              local xJ = entJ.xCenter;  local yJ = entJ.yCenter
+              local time = 0
+              while checkColl(xI, yI, entI.radius, xJ, yJ, entJ.radius)
+                and time < 0.5 do
+                xI = xI + xSpeedI * dt
+                yI = yI + ySpeedI * dt
+                xJ = xJ + xSpeedJ * dt
+                yJ = yJ + ySpeedJ * dt
+                time = time + dt
+              end
+              entI:teleTransport(xI, yI)
+              entJ:teleTransport(xJ, yJ)]] 
+              --The results were not that good.]]
+              
+            elseif entities[j]:is(SpaceDust) then--Against SpaceDust.
+              table.remove(entities, j)
+              i = i - 1
             end
           end
-          break --If there is a collission.
+          --This break was such a mistake. Objects can have two or more simultaneous collisions in
+          --a frame, and this break caused that only one was evaluated.
+          --break --If there is a collission.
         end
+        j = j + 1
       end
     end
     i = i + 1

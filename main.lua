@@ -26,7 +26,7 @@ end
   centerScreenX = screenWidth / 2
   screenHeight = screenWidth --144*2--144 
   centerScreenY = screenHeight / 2
-  fillOrLine = "line" --For the polygons and circles and stuff.
+  fillOrLine = "fill" --For the polygons and circles and stuff.
   
 
 --LOVE CALLBACKS:
