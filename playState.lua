@@ -11,7 +11,7 @@ local playerScore = 0
 local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
 local planetPopStart --Population at the start of the level.
-local extraShips = 0 --Extra lives.
+local extraShips = 1 --Extra lives.
 local buildingShip = 0 --After 100% of metlas were collected, this aumentates
                             --rapidly. Velocity depends on alien population
                             --building the ship.
@@ -394,6 +394,9 @@ local function xenocide(howMany)
       end
       --playerScore = playerScore - planetPopBefore + planetPop
       playerScore = playerScore - (planetPopBefore - planetPop) * planet - 10
+    end
+    if planetPop <= 0 then
+      Gamestate.switch(allDead)
     end
   end
 end
@@ -841,7 +844,7 @@ function play:update(dt)
     
   --If ship is not in table (Was destroyed):
   else
-    if extraShips >= 1 then
+    if extraShips >= 1 and planetPop >= 0 then
       Gamestate.push(preparingShip, circleColor) --Wait for the extra ship with a cool effect.
       --Then insert new ship (In that same state) 
       --[[

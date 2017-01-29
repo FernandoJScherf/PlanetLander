@@ -2,8 +2,10 @@ Ship = Polygon:extend()
 
 function Ship:new(xCenter, yCenter, red, green, blue)
   self.radius = 3 --Some margin for the player
-  self.rotLeft = "a" ; self.rotRight = "d" ; self.accelerate = "w"
-  self.shoot = "space"
+  self.rotLeft = "left" ; self.rotRight = "right" ; self.accelerate = "up"
+  self.shoot = "z"
+  self.rotLeftAlt = "a" ; self.rotRightAlt = "d" ; self.accelerateAlt = "w"
+  self.shootAlt = "m"
   self.shipSpeed = 0
   self.speedMaxLanding = 60
   self.state = 1 --1) Flying. 2) Landing. 3) Rotating. 4) TakingOff.
@@ -117,23 +119,23 @@ function Ship:update(dt)
                                                   --there is no energy.
       local acceleration = 10
       local waitTime = 0.07
-      if love.keyboard.isDown(self.rotRight) and self.state == 1 then --Only when flying.
+      if love.keyboard.isDown(self.rotRight, self.rotRightAlt) and self.state == 1 then --Only when flying.
         self.aSpeed = self.aSpeed + acceleration * dt
         self:propulDust(self.vertices[11], self.vertices[12], 
           self.rotation + piDiv2, self.xSpeed, self.ySpeed)
         --Dust will be out of one of the vertices of the ship. (That is rotating)
       end
-      if love.keyboard.isDown(self.rotLeft) and self.state == 1 then --Only when flying.
+      if love.keyboard.isDown(self.rotLeft, self.rotLeftAlt) and self.state == 1 then --Only when flying.
         self.aSpeed = self.aSpeed - acceleration * dt
         self:propulDust(self.vertices[7], self.vertices[8], 
           self.rotation - piDiv2, self.xSpeed, self.ySpeed)
         --Dust will be out of one of the vertices of the ship. (That is rotating)
       end
-      if love.keyboard.isDown(self.accelerate) and self.state == 1 then
+      if love.keyboard.isDown(self.accelerate, self.accelerateAlt) and self.state == 1 then
          
         self:accel(150, dt) --Should always be bigger than pull of g on planet's surface.
       end
-      if love.keyboard.isDown(self.shoot) and timeToShoot >= 0.025 then
+      if love.keyboard.isDown(self.shoot, self.shootAlt) and timeToShoot >= 0.025 then
         if self.state == 1 then
           self:accel(-50, dt)  -- Every shot makes the ship go slower.
         end
@@ -172,7 +174,7 @@ function Ship:update(dt)
       
       if not self.collidable and (not checkColl(self.xCenter, self.yCenter, self.radius,
         centerScreenX, centerScreenY, circleRadius) or 
-        not love.keyboard.isDown(self.accelerate)) then
+        not love.keyboard.isDown(self.accelerate, self.accelerateAlt)) then
           self.collidable = true
       end
       
@@ -219,7 +221,7 @@ function Ship:update(dt)
       end
       
     elseif self.state == 4 then --IF IN TAKINGOFF STATE.
-      if love.keyboard.isDown(self.accelerate) then   
+      if love.keyboard.isDown(self.accelerate, self.accelerateAlt) then   
         self.state = 1
         self.collidable = false
       end
