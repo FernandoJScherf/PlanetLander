@@ -1,4 +1,4 @@
---Planet Lander. Fernando Jose Scherf. December 2016 - January 2017
+--Planet Lander. Fernando Jose Scherf. December 2016 - January 2017.
 
 
 --The next two functions are needed to draw to the canvas and then
@@ -56,6 +56,9 @@ function love.load()
   require "pauseState"
   require "prepShipState"
   require "allDeadState"
+  require "SICK"
+  
+  highscore.set("hs.txt", 15, "FJS", 68000)
   
   love.graphics.setDefaultFilter("nearest", "nearest", 1)
   love.graphics.setLineStyle("rough")

@@ -1,9 +1,11 @@
 local wasRed
 local r, g, b, time, sin
-function allDead:enter(from)
+local localScore
+function allDead:enter(from, playerScore)
   r, g, b, time, sin = 0, 0, 0, 0, 0
   self.from = from -- record previous state
   wasRed = false
+  localScore = playerScore
 end
 
 
@@ -42,5 +44,5 @@ function allDead:keypressed(key)
     entities[i] = nil
   end
   extraShips = 0
-  Gamestate.switch(score)
+  Gamestate.switch(score, localScore)
 end

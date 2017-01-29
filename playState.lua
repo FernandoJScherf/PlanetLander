@@ -11,7 +11,7 @@ local playerScore = 0
 local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
 local planetPopStart --Population at the start of the level.
-local extraShips = 1 --Extra lives.
+local extraShips = 0 --Extra lives.
 local buildingShip = 0 --After 100% of metlas were collected, this aumentates
                             --rapidly. Velocity depends on alien population
                             --building the ship.
@@ -67,6 +67,7 @@ function loadS:enter()
   --That the game is being excuted for the first time after the menu state:
   if not sourceSFXR.ShipDest then
     playerScore = 0 --So playerScore is put to 0.
+    planet = 1
     
     --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
     local function sfsToSource(f, volume)
@@ -396,7 +397,7 @@ local function xenocide(howMany)
       playerScore = playerScore - (planetPopBefore - planetPop) * planet - 10
     end
     if planetPop <= 0 then
-      Gamestate.switch(allDead)
+      Gamestate.switch(allDead, playerScore)
     end
   end
 end
@@ -1035,7 +1036,7 @@ function play:keypressed(key)
       entities[i] = nil
     end
     planet = 1 --Reset Planet.
-    Gamestate.switch(score)
+    Gamestate.switch(score, playerScore)
   end
 end
 
