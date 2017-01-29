@@ -43,6 +43,18 @@ function Polygon:rotate(dt, angleSpeedOfRotation)
   
 end
 
+function Polygon:teleTransport(x, y)
+  xDistanceToNewPos = x - self.xCenter
+  yDistanceToNewPos = y - self.yCenter
+  self.xCenter = x
+  self.yCenter = y
+  
+  for i = 1, #self.vertices, 2 do
+    self.vertices[i] = self.vertices[i] + xDistanceToNewPos
+    self.vertices[i+1] = self.vertices[i+1] + yDistanceToNewPos
+  end
+end
+
 function Polygon:update(dt)
   if self.beUpdated then
  

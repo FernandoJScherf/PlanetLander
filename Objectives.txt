@@ -8,14 +8,14 @@
 23: Add Scores, increasing difficulty, levels, etc.	increasing difficulty and levels: done!!
 +Make asteroids appear only on external sides.		done!!!done!!!done!!!done!!!done!!!
 +Add metals at random when an asteroid is destroyed .
-24: Work on menu and HighScore Table.
-25: Work on menu and HighScore Table.
-26: Add safe practice levels (How to move and shoot, how to land)
-27: (Happy Birthday 24!) Add safe practice levels (How to move and shoot, how to land)
-28: Make manual and Itch.io page.
-29: Make manual and Itch.io page.
+
+
+26: Work on menu and HighScore Table.
+27: Work on menu and HighScore Table.
+28: TEST TEST TEST
+29: Make Itch.io page.
 30: RELEASE. RELEASE. RELEASE!!!!!!!
 
 If there is extra time:
-Two days: Make trialer.
+Two days: Make manual.
 Plus four days: Add aliens.
