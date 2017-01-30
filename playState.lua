@@ -68,6 +68,9 @@ function loadS:enter()
   if not sourceSFXR.ShipDest then
     playerScore = 0 --So playerScore is put to 0.
     planet = 1
+    timeWavesCont = 0 
+    wavesCont = 1
+    extraShips = 0
     
     --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
     local function sfsToSource(f, volume)
@@ -139,6 +142,8 @@ function loadS:update(dt)
 end
 
 function loadS:draw()
+  setDrawTarget()
+  
   love.graphics.setColor(circleColor[1] + circleColorVar,
     circleColor[2] + circleColorVar, circleColor[3] + circleColorVar)
   
@@ -154,7 +159,8 @@ function loadS:draw()
     for i = 1, #entities do
       entities[i]:draw() 
     end
-
+    
+  backToScreenAndUpscale()
 end
 
 function loadS:keypressed(key)
@@ -394,7 +400,7 @@ local function xenocide(howMany)
         planetPop = 0
       end
       --playerScore = playerScore - planetPopBefore + planetPop
-      playerScore = playerScore - (planetPopBefore - planetPop) * planet - 10
+      playerScore = playerScore - (planetPopBefore - planetPop) - 10 --* planet - 10
     end
     if planetPop <= 0 then
       Gamestate.switch(allDead, playerScore)
@@ -429,7 +435,7 @@ function play:update(dt)
               entities[i].yCenter)
 
             --REMOVE POINTS HERE:
-            xenocide(312) --You killed some aliens during the crashing.
+            xenocide(156) --You killed some aliens during the crashing.
             
             insertFullExplotion(
                     entities[i].xCenter, 
@@ -452,7 +458,7 @@ function play:update(dt)
         insertAndPlaySE(sourceSFXR.LaserVPlanet, entities[i].xCenter,
           entities[i].yCenter)
       --REMOVE POINTS HERE:
-        xenocide(144) --You killed some aliens shooting at them!
+        xenocide(72) --You killed some aliens shooting at them!
       
         insertFullExplotion(
                 entities[i].xCenter, 
@@ -487,7 +493,7 @@ function play:update(dt)
             explosiveSoundRock(entities[i])
             --REMOVES POINTS HERE:
             --The rock kills many people, a number depending on it's radius:
-            xenocide(entities[i].radius ^ 3) 
+            xenocide(entities[i].radius ^ 2) 
           end
         end
       

@@ -1,5 +1,11 @@
 --Planet Lander. Fernando Jose Scherf. December 2016 - January 2017.
 
+  upscalingFactor = 1
+  screenWidth = 568--256*2--256 
+  centerScreenX = screenWidth / 2
+  screenHeight = screenWidth --144*2--144 
+  centerScreenY = screenHeight / 2
+  fillOrLine = "fill" --For the polygons and circles and stuff.
 
 --The next two functions are needed to draw to the canvas and then
 --back from the canvas to the screen, upscaled, in every gamestate:draw:
@@ -17,16 +23,17 @@ function backToScreenAndUpscale()
   --on the visible screen)
     love.graphics.setCanvas() 
   --DRAW UPSCALED CANVAS.
-    love.graphics.draw(canvas, 0, 0, 0, upscalingFactor, upscalingFactor)
+  local x = 0
+  local y = 0  
+  if love.window.getFullscreen() then
+    x, y = love.graphics.getDimensions()
+    x = x / 2 - centerScreenX
+    y = y / 2 - centerScreenY
+  end
+  love.graphics.draw(canvas, x, y, 0, upscalingFactor, upscalingFactor) 
+  love.graphics.rectangle("line", x, y, 
+    screenWidth * upscalingFactor, screenHeight * upscalingFactor) 
 end
-
-  
-  upscalingFactor = 1
-  screenWidth = 512--256*2--256 
-  centerScreenX = screenWidth / 2
-  screenHeight = screenWidth --144*2--144 
-  centerScreenY = screenHeight / 2
-  fillOrLine = "fill" --For the polygons and circles and stuff.
   
 
 --LOVE CALLBACKS:
@@ -83,7 +90,7 @@ end
 
 --Callback function triggered when a key is pressed:
 function love.keypressed(key)
-  if key == "escape" then
+  if key == "q" and love.keyboard.isDown("lctrl") then
     love.event.quit()
   end
   if (key == "l" or key == "f") and love.keyboard.isDown("lctrl") then 

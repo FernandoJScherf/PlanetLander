@@ -21,10 +21,13 @@ end
 function preparingShip:draw()
   -- draw previous screen
   self.from:draw()
+  
+  setDrawTarget()
   local cos = math.cos(time) * 127 + 127
   love.graphics.setColor(255, 255, 255, cos)
   love.graphics.rectangle('fill', 0,0, screenWidth, screenHeight)
   love.graphics.setColor(255, 255, 255)
+  backToScreenAndUpscale()
 end
 
 function preparingShip:leave()

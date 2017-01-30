@@ -13,11 +13,12 @@ function pause:update(dt)
 end
 
 function pause:draw()
-  local W, H = love.graphics.getWidth(), love.graphics.getHeight()
   -- draw previous screen
   self.from:draw()
   -- overlay with pause message
-  love.graphics.printf({{r, g, b}, 'PAUSE!'}, 0, H/2 - (7 + sin * 14), W, 'center')
+  setDrawTarget()
+  love.graphics.printf({{r, g, b}, 'PAUSE!'}, 0, screenHeight/2 - (7 + sin * 14), screenWidth, 'center')
+  backToScreenAndUpscale()
 end
 
 function pause:keypressed(key)

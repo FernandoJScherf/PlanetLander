@@ -8,7 +8,6 @@ function allDead:enter(from, playerScore)
   localScore = playerScore
 end
 
-
 function allDead:update(dt)
   sin = math.sin(time * 2) / 2 + 0.5
   r = 255
@@ -18,9 +17,8 @@ function allDead:update(dt)
 end
 
 function allDead:draw()
-  local W, H = love.graphics.getWidth(), love.graphics.getHeight()
-  -- draw previous screen
-  self.from:draw()
+  setDrawTarget()
+  local W, H = screenWidth, screenHeight
   -- overlay with pause message
   love.graphics.printf({{r, g, b}, 'Every alien family on this planet is dead.\n You are fired.'},
     0, H/2 - 15, W, 'center')
@@ -32,6 +30,7 @@ function allDead:draw()
     love.graphics.setColor(255, 255, 255)
     if cos <= 1 then wasRed = true end
   end
+  backToScreenAndUpscale()
 end
 
 function allDead:keypressed(key)

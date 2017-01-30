@@ -11,6 +11,7 @@ end
 
 function score:draw()
   setDrawTarget()  
+  
   --DRAW EVERYTHING
       love.graphics.printf("HIGH-SCORES", 0, centerScreenY / 8, screenWidth, "center")
     --Print Atribution to the guy who made the song:
