@@ -8,6 +8,8 @@ local contSpaceRock = 0
 local circleColorVar = 0
 local circleColorTime = 0
 local playerScore = 0
+local highScoreYeah = 0
+local highScoreName = ""
 local planet = 1 --Represent levels.
 local planetPop --Planet's Population.
 local planetPopStart --Population at the start of the level.
@@ -71,6 +73,13 @@ function loadS:enter()
     timeWavesCont = 0 
     wavesCont = 1
     extraShips = 0
+    for i, scoreYeah, name in highscore() do
+      if i == 1 then
+        highScoreYeah = scoreYeah
+        highScoreName = name
+        break
+      end
+    end
     
     --GENERATE THE SOUND EFFECTS THAT WILL BE USED THROUGH THE GAME:
     local function sfsToSource(f, volume)
@@ -949,8 +958,11 @@ function play:draw()
     if playerScore < 0 then
       greenBlue = 0
     end
-    love.graphics.printf({{255, greenBlue, greenBlue}, string.format("Score: %d", playerScore)},
+    love.graphics.printf({{255, greenBlue, greenBlue}, string.format("You: %d", playerScore)},
       0, 20, screenWidth - 4, "right")
+    
+    love.graphics.printf(string.format("%s: %d", highScoreName, highScoreYeah),
+      0, 5, screenWidth - 4, "right")
     
     if buildingShip > 0 then
       love.graphics.printf(string.format("Building Extra Ship: %.1f %%", buildingShip),

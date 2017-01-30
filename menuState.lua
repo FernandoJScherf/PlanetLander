@@ -6,7 +6,7 @@ local oldFont
 local font
 function menu:enter()
   opt = {"(1) Start", "(2) High-Scores", "(3) On/Off Fullscreen",
-    "(5) Increment Screen Scale", "(6) Decrement Screen Scale", "(9) Exit"}
+    "(4) Increment Screen Scale", "(5) Decrement Screen Scale", "(9) Exit"}
   atr = {
     " > A Game by Fernando Jose Scherf:",
     "   (https://fernando-j-scherf.itch.io/)",
@@ -38,18 +38,28 @@ end
 function menu:draw()
   setDrawTarget()  
   --DRAW EVERYTHING
-  local scaler = 4
+  local scaler = 2
   local pos
   local limit = 3
   local colMult = 255 / limit
 
   --Print Options:
   for i = 1, #opt do
-    love.graphics.printf(opt[i], 0, 115 + 16 * i, screenWidth, "center")
+    love.graphics.printf(opt[i], 0, 105 + 16 * i, screenWidth, "center")
   end
   
   --Print Controls:
-  love.graphics.printf("Controls:", 0, 250, screenWidth, "center")
+  love.graphics.printf("Controls:", 0, 225, screenWidth / scaler, "center", 0, scaler, scaler)
+  
+  love.graphics.setFont(newFont)
+  
+  scaler = 4
+  --Print Title:
+  for i = 1, limit do
+    pos = math.sin(time + i) * 20
+    love.graphics.printf({{colMult * i, colMult * i, 255}, "PLANET LANDER"} ,
+      0, 30 + pos, screenWidth / scaler, "center", 0, scaler, scaler)
+  end
   
   local function printRect(s1, s2, x, y)
     local width = 40
@@ -59,24 +69,19 @@ function menu:draw()
     love.graphics.printf(s2, x - 20, y - width / 2, width + 40, "center")
   end
   
-  love.graphics.setFont(newFont)
-  
-  --Print Title:
-  for i = 1, limit do
-    pos = math.sin(time + i) * 20
-    love.graphics.printf({{colMult * i, colMult * i, 255}, "PLANET LANDER"} ,
-      0, 40 + pos, screenWidth / scaler, "center", 0, scaler, scaler)
-  end
-  
   local qScreen = centerScreenX * 0.75
-  printRect("W/UP", "Accelerate", qScreen, 294)
-  printRect("A/LEFT", "Rotate", qScreen - 45, 354)
-  printRect("D/RIGHT", "Rotate", qScreen + 45, 354)
-  printRect("Z/M", "Shoot", centerScreenX * 1.25, 319)
+  printRect("W/UP", "Accelerate", qScreen, 280)
+  printRect("A/LEFT", "Rotate", qScreen - 45, 340)
+  printRect("D/RIGHT", "Rotate", qScreen + 45, 340)
+  printRect("Z/M", "Shoot", centerScreenX * 1.25, 305)
+  
+  love.graphics.printf("Ctrl + Q: Close game", 120, 390, screenWidth, "left")
+  love.graphics.printf("P: Pause", 0, 390, screenWidth, "center")
+  love.graphics.printf("Ctrl + L: Change graphic style", 0, 390, screenWidth - 120, "right")
   
   --Print Atributions:
   for i = 1, #atr do
-    love.graphics.printf(atr[i], 0, 410 + 8 * i, screenWidth, "left")
+    love.graphics.printf(atr[i], 0, 412 + 8 * i, screenWidth, "left")
   end
 
   love.graphics.setFont(oldFont)
@@ -93,11 +98,11 @@ function menu:keypressed(key)
         love.window.setMode(screenWidth * upscalingFactor,
                             screenHeight * upscalingFactor)
     end
-  elseif key == "6" then
+  elseif key == "4" then
     upscalingFactor = upscalingFactor + 1
     love.window.setMode(screenWidth * upscalingFactor,
                         screenHeight * upscalingFactor)
-  elseif key == "7" then
+  elseif key == "5" then
     if upscalingFactor > 1 then
       upscalingFactor = upscalingFactor - 1
       love.window.setMode(screenWidth * upscalingFactor,
